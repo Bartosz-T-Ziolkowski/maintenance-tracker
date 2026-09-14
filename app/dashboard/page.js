@@ -25,19 +25,19 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">
           Maintenance Dashboard
         </h1>
 
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-700 mb-6">
           View and manage maintenance requests.
         </p>
 
         <div className="bg-white rounded-xl shadow overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-200">
+          <table className="w-full text-gray-900">
+            <thead className="bg-gray-200 text-gray-900">
               <tr>
                 <th className="text-left p-4">ID</th>
                 <th className="text-left p-4">Requester</th>
@@ -52,7 +52,10 @@ export default function Dashboard() {
 
             <tbody>
               {requests.map((request) => (
-                <tr key={request.id} className="border-t">
+                <tr
+                  key={request.id}
+                  className="border-t text-gray-900"
+                >
                   <td className="p-4">{request.id}</td>
                   <td className="p-4">{request.requester_name}</td>
                   <td className="p-4">{request.department}</td>
