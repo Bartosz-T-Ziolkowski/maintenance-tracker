@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 
 export default function Home() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     requesterName: "",
     department: "",
@@ -12,6 +15,8 @@ export default function Home() {
     priority: "Medium",
     category: "Equipment",
   });
+
+  const [submitting, setSubmitting] = useState(false);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -25,7 +30,9 @@ export default function Home() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const { error } = await supabase
+    setSubmitting(true);
+
+    const { data, error } = await supabase
       .from("maintenance_requests")
       .insert([
         {
@@ -36,24 +43,18 @@ export default function Home() {
           priority: formData.priority,
           category: formData.category,
         },
-      ]);
+      ])
+      .select("id")
+      .single();
 
     if (error) {
       console.error(error);
       alert("There was a problem submitting the request.");
+      setSubmitting(false);
       return;
     }
 
-    alert("Maintenance request submitted!");
-
-    setFormData({
-      requesterName: "",
-      department: "",
-      equipment: "",
-      description: "",
-      priority: "Medium",
-      category: "Equipment",
-    });
+    router.push(`/success?id=${data.id}`);
   }
 
   const inputStyle =
@@ -74,7 +75,10 @@ export default function Home() {
           Submit a maintenance issue below.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
 
           <div>
             <label className={labelStyle}>
@@ -150,7 +154,9 @@ export default function Home() {
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
               <option value="High">High</option>
-              <option value="Emergency">Emergency</option>
+              <option value="Emergency">
+                Emergency
+              </option>
             </select>
           </div>
 
@@ -165,23 +171,44 @@ export default function Home() {
               onChange={handleChange}
               className={inputStyle}
             >
-              <option value="Equipment">Equipment</option>
-              <option value="Electrical">Electrical</option>
-              <option value="Plumbing">Plumbing</option>
-              <option value="HVAC">HVAC</option>
-              <option value="Building">Building</option>
-              <option value="Other">Other</option>
+              <option value="Equipment">
+                Equipment
+              </option>
+
+              <option value="Electrical">
+                Electrical
+              </option>
+
+              <option value="Plumbing">
+                Plumbing
+              </option>
+
+              <option value="HVAC">
+                HVAC
+              </option>
+
+              <option value="Building">
+                Building
+              </option>
+
+              <option value="Other">
+                Other
+              </option>
             </select>
           </div>
 
           <button
             type="submit"
-            className="w-full bg-black text-white p-3 rounded-lg font-semibold hover:bg-gray-800"
+            disabled={submitting}
+            className="w-full bg-black text-white p-3 rounded-lg font-semibold hover:bg-gray-800 disabled:bg-gray-500"
           >
-            Submit Request
+            {submitting
+              ? "Submitting..."
+              : "Submit Request"}
           </button>
 
         </form>
+
       </div>
     </main>
   );
