@@ -64,8 +64,40 @@ export default function RequestDetails() {
     });
   }
 
+  function getTodayDate() {
+    return new Date().toISOString().split("T")[0];
+  }
+
   function handleChange(event) {
     const { name, value } = event.target;
+
+    if (name === "status") {
+      const updatedFormData = {
+        ...formData,
+        status: value,
+      };
+
+      if (
+        value === "In Progress" &&
+        !formData.date_started
+      ) {
+        updatedFormData.date_started = getTodayDate();
+      }
+
+      if (
+        value === "Completed" &&
+        !formData.date_completed
+      ) {
+        updatedFormData.date_completed = getTodayDate();
+
+        if (!formData.date_started) {
+          updatedFormData.date_started = getTodayDate();
+        }
+      }
+
+      setFormData(updatedFormData);
+      return;
+    }
 
     setFormData({
       ...formData,

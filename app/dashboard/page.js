@@ -48,9 +48,37 @@ export default function Dashboard() {
   }
 
   async function updateStatus(id, newStatus) {
+    const today = new Date().toISOString().split("T")[0];
+
+    const currentRequest = requests.find(
+      (request) => request.id === id
+    );
+
+    const updates = {
+      status: newStatus,
+    };
+
+    if (
+      newStatus === "In Progress" &&
+      !currentRequest.date_started
+    ) {
+      updates.date_started = today;
+    }
+
+    if (
+      newStatus === "Completed" &&
+      !currentRequest.date_completed
+    ) {
+      updates.date_completed = today;
+
+      if (!currentRequest.date_started) {
+        updates.date_started = today;
+      }
+    }
+
     const { error } = await supabase
       .from("maintenance_requests")
-      .update({ status: newStatus })
+      .update(updates)
       .eq("id", id);
 
     if (error) {
@@ -62,7 +90,7 @@ export default function Dashboard() {
     setRequests(
       requests.map((request) =>
         request.id === id
-          ? { ...request, status: newStatus }
+          ? { ...request, ...updates }
           : request
       )
     );
@@ -165,23 +193,43 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
           <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">Total Requests</p>
-            <p className="text-3xl font-bold">{totalRequests}</p>
+            <p className="text-gray-600">
+              Total Requests
+            </p>
+
+            <p className="text-3xl font-bold">
+              {totalRequests}
+            </p>
           </div>
 
           <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">New</p>
-            <p className="text-3xl font-bold">{newRequests}</p>
+            <p className="text-gray-600">
+              New
+            </p>
+
+            <p className="text-3xl font-bold">
+              {newRequests}
+            </p>
           </div>
 
           <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">In Progress</p>
-            <p className="text-3xl font-bold">{inProgressRequests}</p>
+            <p className="text-gray-600">
+              In Progress
+            </p>
+
+            <p className="text-3xl font-bold">
+              {inProgressRequests}
+            </p>
           </div>
 
           <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">Completed</p>
-            <p className="text-3xl font-bold">{completedRequests}</p>
+            <p className="text-gray-600">
+              Completed
+            </p>
+
+            <p className="text-3xl font-bold">
+              {completedRequests}
+            </p>
           </div>
 
         </div>
@@ -198,8 +246,10 @@ export default function Dashboard() {
                 type="text"
                 placeholder="Search requests..."
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                className="w-full border border-gray-400 rounded-lg p-2 bg-white"
+                onChange={(event) =>
+                  setSearch(event.target.value)
+                }
+                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
               />
             </div>
 
@@ -213,7 +263,7 @@ export default function Dashboard() {
                 onChange={(event) =>
                   setStatusFilter(event.target.value)
                 }
-                className="w-full border border-gray-400 rounded-lg p-2 bg-white"
+                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
               >
                 <option>All</option>
                 <option>New</option>
@@ -234,7 +284,7 @@ export default function Dashboard() {
                 onChange={(event) =>
                   setPriorityFilter(event.target.value)
                 }
-                className="w-full border border-gray-400 rounded-lg p-2 bg-white"
+                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
               >
                 <option>All</option>
                 <option>Low</option>
@@ -248,7 +298,8 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-white rounded-xl shadow overflow-x-auto">
-          <table className="w-full">
+
+          <table className="w-full text-gray-900">
 
             <thead className="bg-gray-200">
               <tr>
@@ -265,13 +316,17 @@ export default function Dashboard() {
             </thead>
 
             <tbody>
+
               {filteredRequests.map((request) => (
-                <tr key={request.id} className="border-t">
+                <tr
+                  key={request.id}
+                  className="border-t"
+                >
 
                   <td className="p-4">
                     <Link
                       href={`/request/${request.id}`}
-                      className="text-blue-600 underline"
+                      className="text-blue-600 underline font-medium"
                     >
                       #{request.id}
                     </Link>
@@ -310,12 +365,23 @@ export default function Dashboard() {
                           event.target.value
                         )
                       }
-                      className="border border-gray-400 rounded-lg p-2 bg-white"
+                      className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
                     >
-                      <option value="">Unassigned</option>
-                      <option value="John">John</option>
-                      <option value="Mike">Mike</option>
-                      <option value="Sarah">Sarah</option>
+                      <option value="">
+                        Unassigned
+                      </option>
+
+                      <option value="John">
+                        John
+                      </option>
+
+                      <option value="Mike">
+                        Mike
+                      </option>
+
+                      <option value="Sarah">
+                        Sarah
+                      </option>
                     </select>
                   </td>
 
@@ -328,7 +394,7 @@ export default function Dashboard() {
                           event.target.value
                         )
                       }
-                      className="border border-gray-400 rounded-lg p-2 bg-white"
+                      className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
                     >
                       <option>New</option>
                       <option>Assigned</option>
@@ -340,9 +406,22 @@ export default function Dashboard() {
 
                 </tr>
               ))}
+
+              {filteredRequests.length === 0 && (
+                <tr>
+                  <td
+                    colSpan="9"
+                    className="p-8 text-center text-gray-500"
+                  >
+                    No maintenance requests found.
+                  </td>
+                </tr>
+              )}
+
             </tbody>
 
           </table>
+
         </div>
 
       </div>
