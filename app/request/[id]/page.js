@@ -11,6 +11,7 @@ export default function RequestDetails() {
   const id = params.id;
 
   const [request, setRequest] = useState(null);
+  const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -36,7 +37,11 @@ export default function RequestDetails() {
       return;
     }
 
-    await getRequest();
+    await Promise.all([
+      getRequest(),
+      getWorkers(),
+    ]);
+
     setLoading(false);
   }
 
@@ -62,6 +67,21 @@ export default function RequestDetails() {
       repair_notes: data.repair_notes || "",
       cost: data.cost || "",
     });
+  }
+
+  async function getWorkers() {
+    const { data, error } = await supabase
+      .from("workers")
+      .select("*")
+      .eq("active", true)
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setWorkers(data);
   }
 
   function getTodayDate() {
@@ -226,10 +246,18 @@ export default function RequestDetails() {
               onChange={handleChange}
               className="w-full border border-gray-400 rounded-lg p-3 bg-white text-gray-900"
             >
-              <option value="">Unassigned</option>
-              <option value="John">John</option>
-              <option value="Mike">Mike</option>
-              <option value="Sarah">Sarah</option>
+              <option value="">
+                Unassigned
+              </option>
+
+              {workers.map((worker) => (
+                <option
+                  key={worker.id}
+                  value={worker.name}
+                >
+                  {worker.name}
+                </option>
+              ))}
             </select>
           </div>
 
