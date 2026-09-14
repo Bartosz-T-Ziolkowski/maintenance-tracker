@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
+  const [sortOption, setSortOption] = useState("Newest");
 
   useEffect(() => {
     checkUser();
@@ -152,6 +153,26 @@ export default function Dashboard() {
     return "bg-gray-100 text-gray-800 border border-gray-300";
   }
 
+  function getPriorityNumber(priority) {
+    if (priority === "Emergency") {
+      return 4;
+    }
+
+    if (priority === "High") {
+      return 3;
+    }
+
+    if (priority === "Medium") {
+      return 2;
+    }
+
+    if (priority === "Low") {
+      return 1;
+    }
+
+    return 0;
+  }
+
   const filteredRequests = requests.filter((request) => {
     const searchText = search.toLowerCase();
 
@@ -171,6 +192,32 @@ export default function Dashboard() {
       request.priority === priorityFilter;
 
     return matchesSearch && matchesStatus && matchesPriority;
+  });
+
+  const sortedRequests = [...filteredRequests].sort((a, b) => {
+    if (sortOption === "Newest") {
+      return new Date(b.created_at) - new Date(a.created_at);
+    }
+
+    if (sortOption === "Oldest") {
+      return new Date(a.created_at) - new Date(b.created_at);
+    }
+
+    if (sortOption === "Highest Priority") {
+      return (
+        getPriorityNumber(b.priority) -
+        getPriorityNumber(a.priority)
+      );
+    }
+
+    if (sortOption === "Lowest Priority") {
+      return (
+        getPriorityNumber(a.priority) -
+        getPriorityNumber(b.priority)
+      );
+    }
+
+    return 0;
   });
 
   const totalRequests = requests.length;
@@ -263,7 +310,7 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-white p-4 rounded-xl shadow mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
             <div>
               <label className="block font-medium mb-1">
@@ -322,6 +369,25 @@ export default function Dashboard() {
               </select>
             </div>
 
+            <div>
+              <label className="block font-medium mb-1">
+                Sort By
+              </label>
+
+              <select
+                value={sortOption}
+                onChange={(event) =>
+                  setSortOption(event.target.value)
+                }
+                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+              >
+                <option>Newest</option>
+                <option>Oldest</option>
+                <option>Highest Priority</option>
+                <option>Lowest Priority</option>
+              </select>
+            </div>
+
           </div>
         </div>
 
@@ -346,7 +412,7 @@ export default function Dashboard() {
 
             <tbody>
 
-              {filteredRequests.map((request) => (
+              {sortedRequests.map((request) => (
                 <tr
                   key={request.id}
                   className={
@@ -450,7 +516,7 @@ export default function Dashboard() {
                 </tr>
               ))}
 
-              {filteredRequests.length === 0 && (
+              {sortedRequests.length === 0 && (
                 <tr>
                   <td
                     colSpan="10"
