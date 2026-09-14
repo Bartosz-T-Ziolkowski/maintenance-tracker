@@ -240,7 +240,7 @@ export default function Dashboard() {
     return 0;
   });
 
-  // Main summary numbers
+  // Request overview
   const totalRequests = requests.length;
 
   const newRequests = requests.filter(
@@ -255,7 +255,7 @@ export default function Dashboard() {
     (request) => request.status === "Completed"
   ).length;
 
-  // Analytics numbers
+  // Repair cost analytics
   const totalRepairCost = requests.reduce(
     (total, request) =>
       total + Number(request.cost || 0),
@@ -285,6 +285,39 @@ export default function Dashboard() {
   const unassignedRequests = requests.filter(
     (request) => !request.assigned_to
   ).length;
+
+  // Completion time analytics
+  const completedWithDates = requests.filter(
+    (request) =>
+      request.date_started &&
+      request.date_completed
+  );
+
+  const totalCompletionDays = completedWithDates.reduce(
+    (total, request) => {
+      const startDate = new Date(
+        `${request.date_started}T00:00:00`
+      );
+
+      const completedDate = new Date(
+        `${request.date_completed}T00:00:00`
+      );
+
+      const difference =
+        completedDate.getTime() - startDate.getTime();
+
+      const days =
+        difference / (1000 * 60 * 60 * 24);
+
+      return total + days;
+    },
+    0
+  );
+
+  const averageCompletionTime =
+    completedWithDates.length > 0
+      ? totalCompletionDays / completedWithDates.length
+      : 0;
 
   if (loading) {
     return (
@@ -331,7 +364,7 @@ export default function Dashboard() {
 
         </div>
 
-        {/* Request Summary */}
+        {/* Request Overview */}
         <h2 className="text-xl font-bold mb-3">
           Request Overview
         </h2>
@@ -342,7 +375,6 @@ export default function Dashboard() {
             <p className="text-gray-600">
               Total Requests
             </p>
-
             <p className="text-3xl font-bold">
               {totalRequests}
             </p>
@@ -352,7 +384,6 @@ export default function Dashboard() {
             <p className="text-gray-600">
               New
             </p>
-
             <p className="text-3xl font-bold">
               {newRequests}
             </p>
@@ -362,7 +393,6 @@ export default function Dashboard() {
             <p className="text-gray-600">
               In Progress
             </p>
-
             <p className="text-3xl font-bold">
               {inProgressRequests}
             </p>
@@ -372,7 +402,6 @@ export default function Dashboard() {
             <p className="text-gray-600">
               Completed
             </p>
-
             <p className="text-3xl font-bold">
               {completedRequests}
             </p>
@@ -380,19 +409,19 @@ export default function Dashboard() {
 
         </div>
 
-        {/* Analytics */}
+        {/* Maintenance Analytics */}
         <h2 className="text-xl font-bold mb-3">
           Maintenance Analytics
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
 
           <div className="bg-white p-4 rounded-xl shadow">
             <p className="text-gray-600">
               Total Repair Cost
             </p>
 
-            <p className="text-3xl font-bold">
+            <p className="text-2xl font-bold">
               ${totalRepairCost.toFixed(2)}
             </p>
           </div>
@@ -402,8 +431,18 @@ export default function Dashboard() {
               Average Repair Cost
             </p>
 
-            <p className="text-3xl font-bold">
+            <p className="text-2xl font-bold">
               ${averageRepairCost.toFixed(2)}
+            </p>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl shadow">
+            <p className="text-gray-600">
+              Average Completion Time
+            </p>
+
+            <p className="text-2xl font-bold">
+              {averageCompletionTime.toFixed(1)} days
             </p>
           </div>
 
@@ -412,7 +451,7 @@ export default function Dashboard() {
               Emergency Requests
             </p>
 
-            <p className="text-3xl font-bold">
+            <p className="text-2xl font-bold">
               {emergencyRequests}
             </p>
           </div>
@@ -422,7 +461,7 @@ export default function Dashboard() {
               Unassigned Requests
             </p>
 
-            <p className="text-3xl font-bold">
+            <p className="text-2xl font-bold">
               {unassignedRequests}
             </p>
           </div>
@@ -520,7 +559,6 @@ export default function Dashboard() {
           <table className="w-full text-gray-900">
 
             <thead className="bg-gray-200">
-
               <tr>
                 <th className="text-left p-4">ID</th>
                 <th className="text-left p-4">Created</th>
@@ -533,13 +571,11 @@ export default function Dashboard() {
                 <th className="text-left p-4">Assigned To</th>
                 <th className="text-left p-4">Status</th>
               </tr>
-
             </thead>
 
             <tbody>
 
               {sortedRequests.map((request) => (
-
                 <tr
                   key={request.id}
                   className={
@@ -550,14 +586,12 @@ export default function Dashboard() {
                 >
 
                   <td className="p-4">
-
                     <Link
                       href={`/request/${request.id}`}
                       className="text-blue-600 underline font-medium"
                     >
                       #{request.id}
                     </Link>
-
                   </td>
 
                   <td className="p-4">
@@ -581,7 +615,6 @@ export default function Dashboard() {
                   </td>
 
                   <td className="p-4">
-
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getPriorityStyle(
                         request.priority
@@ -589,7 +622,6 @@ export default function Dashboard() {
                     >
                       {request.priority}
                     </span>
-
                   </td>
 
                   <td className="p-4">
@@ -614,14 +646,12 @@ export default function Dashboard() {
                       </option>
 
                       {workers.map((worker) => (
-
                         <option
                           key={worker.id}
                           value={worker.name}
                         >
                           {worker.name}
                         </option>
-
                       ))}
 
                     </select>
@@ -652,11 +682,9 @@ export default function Dashboard() {
                   </td>
 
                 </tr>
-
               ))}
 
               {sortedRequests.length === 0 && (
-
                 <tr>
                   <td
                     colSpan="10"
@@ -665,7 +693,6 @@ export default function Dashboard() {
                     No maintenance requests found.
                   </td>
                 </tr>
-
               )}
 
             </tbody>
