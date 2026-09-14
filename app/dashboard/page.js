@@ -132,6 +132,26 @@ export default function Dashboard() {
     return new Date(dateString).toLocaleDateString();
   }
 
+  function getPriorityStyle(priority) {
+    if (priority === "Emergency") {
+      return "bg-red-100 text-red-800 border border-red-300";
+    }
+
+    if (priority === "High") {
+      return "bg-orange-100 text-orange-800 border border-orange-300";
+    }
+
+    if (priority === "Medium") {
+      return "bg-yellow-100 text-yellow-800 border border-yellow-300";
+    }
+
+    if (priority === "Low") {
+      return "bg-green-100 text-green-800 border border-green-300";
+    }
+
+    return "bg-gray-100 text-gray-800 border border-gray-300";
+  }
+
   const filteredRequests = requests.filter((request) => {
     const searchText = search.toLowerCase();
 
@@ -329,7 +349,11 @@ export default function Dashboard() {
               {filteredRequests.map((request) => (
                 <tr
                   key={request.id}
-                  className="border-t"
+                  className={
+                    request.priority === "Emergency"
+                      ? "border-t bg-red-50"
+                      : "border-t"
+                  }
                 >
 
                   <td className="p-4">
@@ -362,7 +386,13 @@ export default function Dashboard() {
                   </td>
 
                   <td className="p-4">
-                    {request.priority}
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getPriorityStyle(
+                        request.priority
+                      )}`}
+                    >
+                      {request.priority}
+                    </span>
                   </td>
 
                   <td className="p-4">
