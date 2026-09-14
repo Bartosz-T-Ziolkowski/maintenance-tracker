@@ -124,6 +124,14 @@ export default function Dashboard() {
     router.push("/login");
   }
 
+  function formatDate(dateString) {
+    if (!dateString) {
+      return "";
+    }
+
+    return new Date(dateString).toLocaleDateString();
+  }
+
   const filteredRequests = requests.filter((request) => {
     const searchText = search.toLowerCase();
 
@@ -304,6 +312,7 @@ export default function Dashboard() {
             <thead className="bg-gray-200">
               <tr>
                 <th className="text-left p-4">ID</th>
+                <th className="text-left p-4">Created</th>
                 <th className="text-left p-4">Requester</th>
                 <th className="text-left p-4">Location</th>
                 <th className="text-left p-4">Equipment</th>
@@ -330,6 +339,10 @@ export default function Dashboard() {
                     >
                       #{request.id}
                     </Link>
+                  </td>
+
+                  <td className="p-4">
+                    {formatDate(request.created_at)}
                   </td>
 
                   <td className="p-4">
@@ -410,7 +423,7 @@ export default function Dashboard() {
               {filteredRequests.length === 0 && (
                 <tr>
                   <td
-                    colSpan="9"
+                    colSpan="10"
                     className="p-8 text-center text-gray-500"
                   >
                     No maintenance requests found.
