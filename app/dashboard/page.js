@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 
 export default function Dashboard() {
@@ -69,6 +70,7 @@ export default function Dashboard() {
   return (
     <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
       <div className="max-w-7xl mx-auto">
+
         <h1 className="text-3xl font-bold mb-2">
           Maintenance Dashboard
         </h1>
@@ -79,6 +81,7 @@ export default function Dashboard() {
 
         <div className="bg-white rounded-xl shadow overflow-x-auto">
           <table className="w-full text-gray-900">
+
             <thead className="bg-gray-200">
               <tr>
                 <th className="text-left p-4">ID</th>
@@ -95,14 +98,43 @@ export default function Dashboard() {
 
             <tbody>
               {requests.map((request) => (
-                <tr key={request.id} className="border-t">
-                  <td className="p-4">{request.id}</td>
-                  <td className="p-4">{request.requester_name}</td>
-                  <td className="p-4">{request.department}</td>
-                  <td className="p-4">{request.equipment}</td>
-                  <td className="p-4">{request.description}</td>
-                  <td className="p-4">{request.priority}</td>
-                  <td className="p-4">{request.category}</td>
+                <tr
+                  key={request.id}
+                  className="border-t"
+                >
+
+                  <td className="p-4">
+                    <Link
+                      href={`/request/${request.id}`}
+                      className="text-blue-600 underline font-medium"
+                    >
+                      #{request.id}
+                    </Link>
+                  </td>
+
+                  <td className="p-4">
+                    {request.requester_name}
+                  </td>
+
+                  <td className="p-4">
+                    {request.department}
+                  </td>
+
+                  <td className="p-4">
+                    {request.equipment}
+                  </td>
+
+                  <td className="p-4">
+                    {request.description}
+                  </td>
+
+                  <td className="p-4">
+                    {request.priority}
+                  </td>
+
+                  <td className="p-4">
+                    {request.category}
+                  </td>
 
                   <td className="p-4">
                     <select
@@ -140,11 +172,14 @@ export default function Dashboard() {
                       <option>Completed</option>
                     </select>
                   </td>
+
                 </tr>
               ))}
             </tbody>
+
           </table>
         </div>
+
       </div>
     </main>
   );
