@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
 
 export default function RequestDetails() {
@@ -9,6 +10,7 @@ export default function RequestDetails() {
   const id = params.id;
 
   const [request, setRequest] = useState(null);
+
   const [formData, setFormData] = useState({
     assigned_to: "",
     status: "New",
@@ -82,7 +84,9 @@ export default function RequestDetails() {
   if (!request) {
     return (
       <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
-        Loading request...
+        <div className="max-w-3xl mx-auto">
+          <p>Loading request...</p>
+        </div>
       </main>
     );
   }
@@ -91,23 +95,51 @@ export default function RequestDetails() {
     <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
 
-        <h1 className="text-3xl font-bold mb-6">
+        <Link
+          href="/dashboard"
+          className="text-blue-600 hover:text-blue-800 underline mb-4 inline-block"
+        >
+          ← Back to Dashboard
+        </Link>
+
+        <h1 className="text-3xl font-bold mb-2 text-gray-900">
           Maintenance Request #{request.id}
         </h1>
 
-        <div className="space-y-2 mb-8">
-          <p><strong>Requester:</strong> {request.requester_name}</p>
-          <p><strong>Location:</strong> {request.department}</p>
-          <p><strong>Equipment:</strong> {request.equipment}</p>
-          <p><strong>Problem:</strong> {request.description}</p>
-          <p><strong>Priority:</strong> {request.priority}</p>
-          <p><strong>Category:</strong> {request.category}</p>
+        <p className="text-gray-600 mb-6">
+          View and update this maintenance request.
+        </p>
+
+        <div className="bg-gray-100 rounded-lg p-4 mb-8 space-y-2">
+          <p>
+            <strong>Requester:</strong> {request.requester_name}
+          </p>
+
+          <p>
+            <strong>Location:</strong> {request.department}
+          </p>
+
+          <p>
+            <strong>Equipment:</strong> {request.equipment}
+          </p>
+
+          <p>
+            <strong>Problem:</strong> {request.description}
+          </p>
+
+          <p>
+            <strong>Priority:</strong> {request.priority}
+          </p>
+
+          <p>
+            <strong>Category:</strong> {request.category}
+          </p>
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
 
           <div>
-            <label className="block font-medium mb-1">
+            <label className="block font-medium mb-1 text-gray-900">
               Assigned To
             </label>
 
@@ -115,7 +147,7 @@ export default function RequestDetails() {
               name="assigned_to"
               value={formData.assigned_to}
               onChange={handleChange}
-              className="w-full border border-gray-400 rounded-lg p-2 bg-white"
+              className="w-full border border-gray-400 rounded-lg p-3 bg-white text-gray-900"
             >
               <option value="">Unassigned</option>
               <option value="John">John</option>
@@ -125,7 +157,7 @@ export default function RequestDetails() {
           </div>
 
           <div>
-            <label className="block font-medium mb-1">
+            <label className="block font-medium mb-1 text-gray-900">
               Status
             </label>
 
@@ -133,18 +165,20 @@ export default function RequestDetails() {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full border border-gray-400 rounded-lg p-2 bg-white"
+              className="w-full border border-gray-400 rounded-lg p-3 bg-white text-gray-900"
             >
-              <option>New</option>
-              <option>Assigned</option>
-              <option>In Progress</option>
-              <option>Waiting for Parts</option>
-              <option>Completed</option>
+              <option value="New">New</option>
+              <option value="Assigned">Assigned</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Waiting for Parts">
+                Waiting for Parts
+              </option>
+              <option value="Completed">Completed</option>
             </select>
           </div>
 
           <div>
-            <label className="block font-medium mb-1">
+            <label className="block font-medium mb-1 text-gray-900">
               Date Started
             </label>
 
@@ -153,12 +187,12 @@ export default function RequestDetails() {
               name="date_started"
               value={formData.date_started}
               onChange={handleChange}
-              className="w-full border border-gray-400 rounded-lg p-2"
+              className="w-full border border-gray-400 rounded-lg p-3 bg-white text-gray-900"
             />
           </div>
 
           <div>
-            <label className="block font-medium mb-1">
+            <label className="block font-medium mb-1 text-gray-900">
               Date Completed
             </label>
 
@@ -167,12 +201,12 @@ export default function RequestDetails() {
               name="date_completed"
               value={formData.date_completed}
               onChange={handleChange}
-              className="w-full border border-gray-400 rounded-lg p-2"
+              className="w-full border border-gray-400 rounded-lg p-3 bg-white text-gray-900"
             />
           </div>
 
           <div>
-            <label className="block font-medium mb-1">
+            <label className="block font-medium mb-1 text-gray-900">
               Repair Notes
             </label>
 
@@ -181,28 +215,31 @@ export default function RequestDetails() {
               value={formData.repair_notes}
               onChange={handleChange}
               rows="4"
-              className="w-full border border-gray-400 rounded-lg p-2"
+              placeholder="Enter repair notes..."
+              className="w-full border border-gray-400 rounded-lg p-3 bg-white text-gray-900"
             />
           </div>
 
           <div>
-            <label className="block font-medium mb-1">
-              Cost
+            <label className="block font-medium mb-1 text-gray-900">
+              Repair Cost ($)
             </label>
 
             <input
               type="number"
               step="0.01"
+              min="0"
               name="cost"
               value={formData.cost}
               onChange={handleChange}
-              className="w-full border border-gray-400 rounded-lg p-2"
+              placeholder="0.00"
+              className="w-full border border-gray-400 rounded-lg p-3 bg-white text-gray-900"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-black text-white p-3 rounded-lg font-semibold"
+            className="w-full bg-black text-white p-3 rounded-lg font-semibold hover:bg-gray-800"
           >
             Save Changes
           </button>
