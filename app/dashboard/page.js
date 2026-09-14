@@ -7,6 +7,10 @@ import { supabase } from "../../lib/supabase";
 export default function Dashboard() {
   const [requests, setRequests] = useState([]);
 
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [priorityFilter, setPriorityFilter] = useState("All");
+
   useEffect(() => {
     getRequests();
   }, []);
@@ -49,7 +53,9 @@ export default function Dashboard() {
   async function updateAssignedTo(id, assignedTo) {
     const { error } = await supabase
       .from("maintenance_requests")
-      .update({ assigned_to: assignedTo })
+      .update({
+        assigned_to: assignedTo || null,
+      })
       .eq("id", id);
 
     if (error) {
@@ -67,6 +73,27 @@ export default function Dashboard() {
     );
   }
 
+  const filteredRequests = requests.filter((request) => {
+    const searchText = search.toLowerCase();
+
+    const matchesSearch =
+      request.requester_name?.toLowerCase().includes(searchText) ||
+      request.department?.toLowerCase().includes(searchText) ||
+      request.equipment?.toLowerCase().includes(searchText) ||
+      request.description?.toLowerCase().includes(searchText) ||
+      request.category?.toLowerCase().includes(searchText);
+
+    const matchesStatus =
+      statusFilter === "All" ||
+      request.status === statusFilter;
+
+    const matchesPriority =
+      priorityFilter === "All" ||
+      request.priority === priorityFilter;
+
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
+
   return (
     <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
       <div className="max-w-7xl mx-auto">
@@ -79,6 +106,69 @@ export default function Dashboard() {
           View and manage maintenance requests.
         </p>
 
+        {/* Search and Filters */}
+        <div className="bg-white p-4 rounded-xl shadow mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            <div>
+              <label className="block font-medium mb-1">
+                Search
+              </label>
+
+              <input
+                type="text"
+                placeholder="Search requests..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium mb-1">
+                Status
+              </label>
+
+              <select
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value)
+                }
+                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+              >
+                <option>All</option>
+                <option>New</option>
+                <option>Assigned</option>
+                <option>In Progress</option>
+                <option>Waiting for Parts</option>
+                <option>Completed</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-medium mb-1">
+                Priority
+              </label>
+
+              <select
+                value={priorityFilter}
+                onChange={(event) =>
+                  setPriorityFilter(event.target.value)
+                }
+                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+              >
+                <option>All</option>
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+                <option>Emergency</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Request Table */}
         <div className="bg-white rounded-xl shadow overflow-x-auto">
           <table className="w-full text-gray-900">
 
@@ -97,12 +187,11 @@ export default function Dashboard() {
             </thead>
 
             <tbody>
-              {requests.map((request) => (
+              {filteredRequests.map((request) => (
                 <tr
                   key={request.id}
                   className="border-t"
                 >
-
                   <td className="p-4">
                     <Link
                       href={`/request/${request.id}`}
@@ -156,7 +245,7 @@ export default function Dashboard() {
 
                   <td className="p-4">
                     <select
-                      value={request.status}
+                      value={request.status || "New"}
                       onChange={(event) =>
                         updateStatus(
                           request.id,
@@ -172,9 +261,19 @@ export default function Dashboard() {
                       <option>Completed</option>
                     </select>
                   </td>
-
                 </tr>
               ))}
+
+              {filteredRequests.length === 0 && (
+                <tr>
+                  <td
+                    colSpan="9"
+                    className="p-8 text-center text-gray-500"
+                  >
+                    No maintenance requests found.
+                  </td>
+                </tr>
+              )}
             </tbody>
 
           </table>
