@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
 
 export default function RequestDetails() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id;
 
   const [request, setRequest] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     assigned_to: "",
@@ -21,32 +23,46 @@ export default function RequestDetails() {
   });
 
   useEffect(() => {
-    async function getRequest() {
-      const { data, error } = await supabase
-        .from("maintenance_requests")
-        .select("*")
-        .eq("id", id)
-        .single();
+    checkUser();
+  }, [id]);
 
-      if (error) {
-        console.error(error);
-        return;
-      }
+  async function checkUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      setRequest(data);
-
-      setFormData({
-        assigned_to: data.assigned_to || "",
-        status: data.status || "New",
-        date_started: data.date_started || "",
-        date_completed: data.date_completed || "",
-        repair_notes: data.repair_notes || "",
-        cost: data.cost || "",
-      });
+    if (!user) {
+      router.push("/login");
+      return;
     }
 
-    getRequest();
-  }, [id]);
+    await getRequest();
+    setLoading(false);
+  }
+
+  async function getRequest() {
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setRequest(data);
+
+    setFormData({
+      assigned_to: data.assigned_to || "",
+      status: data.status || "New",
+      date_started: data.date_started || "",
+      date_completed: data.date_completed || "",
+      repair_notes: data.repair_notes || "",
+      cost: data.cost || "",
+    });
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -63,12 +79,15 @@ export default function RequestDetails() {
     const { error } = await supabase
       .from("maintenance_requests")
       .update({
-        assigned_to: formData.assigned_to,
+        assigned_to: formData.assigned_to || null,
         status: formData.status,
         date_started: formData.date_started || null,
         date_completed: formData.date_completed || null,
         repair_notes: formData.repair_notes,
-        cost: formData.cost === "" ? null : Number(formData.cost),
+        cost:
+          formData.cost === ""
+            ? null
+            : Number(formData.cost),
       })
       .eq("id", id);
 
@@ -81,12 +100,23 @@ export default function RequestDetails() {
     alert("Request updated successfully!");
   }
 
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
+        <p>Loading request...</p>
+      </main>
+    );
+  }
+
   if (!request) {
     return (
       <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
-        <div className="max-w-3xl mx-auto">
-          <p>Loading request...</p>
-        </div>
+        <p>Request not found.</p>
       </main>
     );
   }
@@ -95,14 +125,23 @@ export default function RequestDetails() {
     <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
 
-        <Link
-          href="/dashboard"
-          className="text-blue-600 hover:text-blue-800 underline mb-4 inline-block"
-        >
-          ← Back to Dashboard
-        </Link>
+        <div className="flex justify-between items-center mb-6">
+          <Link
+            href="/dashboard"
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            ← Back to Dashboard
+          </Link>
 
-        <h1 className="text-3xl font-bold mb-2 text-gray-900">
+          <button
+            onClick={handleLogout}
+            className="bg-black text-white px-4 py-2 rounded-lg"
+          >
+            Log Out
+          </button>
+        </div>
+
+        <h1 className="text-3xl font-bold mb-2">
           Maintenance Request #{request.id}
         </h1>
 
@@ -112,34 +151,40 @@ export default function RequestDetails() {
 
         <div className="bg-gray-100 rounded-lg p-4 mb-8 space-y-2">
           <p>
-            <strong>Requester:</strong> {request.requester_name}
+            <strong>Requester:</strong>{" "}
+            {request.requester_name}
           </p>
 
           <p>
-            <strong>Location:</strong> {request.department}
+            <strong>Location:</strong>{" "}
+            {request.department}
           </p>
 
           <p>
-            <strong>Equipment:</strong> {request.equipment}
+            <strong>Equipment:</strong>{" "}
+            {request.equipment}
           </p>
 
           <p>
-            <strong>Problem:</strong> {request.description}
+            <strong>Problem:</strong>{" "}
+            {request.description}
           </p>
 
           <p>
-            <strong>Priority:</strong> {request.priority}
+            <strong>Priority:</strong>{" "}
+            {request.priority}
           </p>
 
           <p>
-            <strong>Category:</strong> {request.category}
+            <strong>Category:</strong>{" "}
+            {request.category}
           </p>
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
 
           <div>
-            <label className="block font-medium mb-1 text-gray-900">
+            <label className="block font-medium mb-1">
               Assigned To
             </label>
 
@@ -157,7 +202,7 @@ export default function RequestDetails() {
           </div>
 
           <div>
-            <label className="block font-medium mb-1 text-gray-900">
+            <label className="block font-medium mb-1">
               Status
             </label>
 
@@ -169,16 +214,20 @@ export default function RequestDetails() {
             >
               <option value="New">New</option>
               <option value="Assigned">Assigned</option>
-              <option value="In Progress">In Progress</option>
+              <option value="In Progress">
+                In Progress
+              </option>
               <option value="Waiting for Parts">
                 Waiting for Parts
               </option>
-              <option value="Completed">Completed</option>
+              <option value="Completed">
+                Completed
+              </option>
             </select>
           </div>
 
           <div>
-            <label className="block font-medium mb-1 text-gray-900">
+            <label className="block font-medium mb-1">
               Date Started
             </label>
 
@@ -192,7 +241,7 @@ export default function RequestDetails() {
           </div>
 
           <div>
-            <label className="block font-medium mb-1 text-gray-900">
+            <label className="block font-medium mb-1">
               Date Completed
             </label>
 
@@ -206,7 +255,7 @@ export default function RequestDetails() {
           </div>
 
           <div>
-            <label className="block font-medium mb-1 text-gray-900">
+            <label className="block font-medium mb-1">
               Repair Notes
             </label>
 
@@ -221,7 +270,7 @@ export default function RequestDetails() {
           </div>
 
           <div>
-            <label className="block font-medium mb-1 text-gray-900">
+            <label className="block font-medium mb-1">
               Repair Cost ($)
             </label>
 
