@@ -94,6 +94,20 @@ export default function Dashboard() {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  const totalRequests = requests.length;
+
+  const newRequests = requests.filter(
+    (request) => request.status === "New"
+  ).length;
+
+  const inProgressRequests = requests.filter(
+    (request) => request.status === "In Progress"
+  ).length;
+
+  const completedRequests = requests.filter(
+    (request) => request.status === "Completed"
+  ).length;
+
   return (
     <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
       <div className="max-w-7xl mx-auto">
@@ -105,6 +119,51 @@ export default function Dashboard() {
         <p className="text-gray-700 mb-6">
           View and manage maintenance requests.
         </p>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+          <div className="bg-white p-4 rounded-xl shadow">
+            <p className="text-gray-600">
+              Total Requests
+            </p>
+
+            <p className="text-3xl font-bold">
+              {totalRequests}
+            </p>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl shadow">
+            <p className="text-gray-600">
+              New
+            </p>
+
+            <p className="text-3xl font-bold">
+              {newRequests}
+            </p>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl shadow">
+            <p className="text-gray-600">
+              In Progress
+            </p>
+
+            <p className="text-3xl font-bold">
+              {inProgressRequests}
+            </p>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl shadow">
+            <p className="text-gray-600">
+              Completed
+            </p>
+
+            <p className="text-3xl font-bold">
+              {completedRequests}
+            </p>
+          </div>
+
+        </div>
 
         {/* Search and Filters */}
         <div className="bg-white p-4 rounded-xl shadow mb-6">
@@ -119,7 +178,9 @@ export default function Dashboard() {
                 type="text"
                 placeholder="Search requests..."
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) =>
+                  setSearch(event.target.value)
+                }
                 className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
               />
             </div>
@@ -170,6 +231,7 @@ export default function Dashboard() {
 
         {/* Request Table */}
         <div className="bg-white rounded-xl shadow overflow-x-auto">
+
           <table className="w-full text-gray-900">
 
             <thead className="bg-gray-200">
@@ -187,11 +249,13 @@ export default function Dashboard() {
             </thead>
 
             <tbody>
+
               {filteredRequests.map((request) => (
                 <tr
                   key={request.id}
                   className="border-t"
                 >
+
                   <td className="p-4">
                     <Link
                       href={`/request/${request.id}`}
@@ -226,6 +290,7 @@ export default function Dashboard() {
                   </td>
 
                   <td className="p-4">
+
                     <select
                       value={request.assigned_to || ""}
                       onChange={(event) =>
@@ -236,14 +301,28 @@ export default function Dashboard() {
                       }
                       className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
                     >
-                      <option value="">Unassigned</option>
-                      <option value="John">John</option>
-                      <option value="Mike">Mike</option>
-                      <option value="Sarah">Sarah</option>
+                      <option value="">
+                        Unassigned
+                      </option>
+
+                      <option value="John">
+                        John
+                      </option>
+
+                      <option value="Mike">
+                        Mike
+                      </option>
+
+                      <option value="Sarah">
+                        Sarah
+                      </option>
+
                     </select>
+
                   </td>
 
                   <td className="p-4">
+
                     <select
                       value={request.status || "New"}
                       onChange={(event) =>
@@ -254,13 +333,31 @@ export default function Dashboard() {
                       }
                       className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
                     >
-                      <option>New</option>
-                      <option>Assigned</option>
-                      <option>In Progress</option>
-                      <option>Waiting for Parts</option>
-                      <option>Completed</option>
+
+                      <option>
+                        New
+                      </option>
+
+                      <option>
+                        Assigned
+                      </option>
+
+                      <option>
+                        In Progress
+                      </option>
+
+                      <option>
+                        Waiting for Parts
+                      </option>
+
+                      <option>
+                        Completed
+                      </option>
+
                     </select>
+
                   </td>
+
                 </tr>
               ))}
 
@@ -274,9 +371,11 @@ export default function Dashboard() {
                   </td>
                 </tr>
               )}
+
             </tbody>
 
           </table>
+
         </div>
 
       </div>
