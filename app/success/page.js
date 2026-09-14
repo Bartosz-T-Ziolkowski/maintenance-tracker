@@ -1,11 +1,8 @@
-"use client";
-
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
-export default function SuccessPage() {
-  const searchParams = useSearchParams();
-  const requestId = searchParams.get("id");
+export default async function SuccessPage({ searchParams }) {
+  const params = await searchParams;
+  const requestId = params.id;
 
   return (
     <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
