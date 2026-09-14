@@ -9,6 +9,7 @@ export default function Dashboard() {
   const router = useRouter();
 
   const [requests, setRequests] = useState([]);
+  const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
@@ -30,7 +31,11 @@ export default function Dashboard() {
       return;
     }
 
-    await getRequests();
+    await Promise.all([
+      getRequests(),
+      getWorkers(),
+    ]);
+
     setLoading(false);
   }
 
@@ -46,6 +51,21 @@ export default function Dashboard() {
     }
 
     setRequests(data);
+  }
+
+  async function getWorkers() {
+    const { data, error } = await supabase
+      .from("workers")
+      .select("*")
+      .eq("active", true)
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setWorkers(data);
   }
 
   async function updateStatus(id, newStatus) {
@@ -480,17 +500,14 @@ export default function Dashboard() {
                         Unassigned
                       </option>
 
-                      <option value="John">
-                        John
-                      </option>
-
-                      <option value="Mike">
-                        Mike
-                      </option>
-
-                      <option value="Sarah">
-                        Sarah
-                      </option>
+                      {workers.map((worker) => (
+                        <option
+                          key={worker.id}
+                          value={worker.name}
+                        >
+                          {worker.name}
+                        </option>
+                      ))}
                     </select>
                   </td>
 
