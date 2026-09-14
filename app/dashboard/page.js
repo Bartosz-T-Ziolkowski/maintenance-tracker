@@ -240,6 +240,7 @@ export default function Dashboard() {
     return 0;
   });
 
+  // Main summary numbers
   const totalRequests = requests.length;
 
   const newRequests = requests.filter(
@@ -254,6 +255,37 @@ export default function Dashboard() {
     (request) => request.status === "Completed"
   ).length;
 
+  // Analytics numbers
+  const totalRepairCost = requests.reduce(
+    (total, request) =>
+      total + Number(request.cost || 0),
+    0
+  );
+
+  const requestsWithCost = requests.filter(
+    (request) =>
+      request.cost !== null &&
+      request.cost !== "" &&
+      Number(request.cost) > 0
+  );
+
+  const averageRepairCost =
+    requestsWithCost.length > 0
+      ? requestsWithCost.reduce(
+          (total, request) =>
+            total + Number(request.cost),
+          0
+        ) / requestsWithCost.length
+      : 0;
+
+  const emergencyRequests = requests.filter(
+    (request) => request.priority === "Emergency"
+  ).length;
+
+  const unassignedRequests = requests.filter(
+    (request) => !request.assigned_to
+  ).length;
+
   if (loading) {
     return (
       <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
@@ -266,35 +298,45 @@ export default function Dashboard() {
     <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
       <div className="max-w-7xl mx-auto">
 
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
-  <div>
-    <h1 className="text-3xl font-bold">
-      Maintenance Dashboard
-    </h1>
 
-    <p className="text-gray-700">
-      View and manage maintenance requests.
-    </p>
-  </div>
+          <div>
+            <h1 className="text-3xl font-bold">
+              Maintenance Dashboard
+            </h1>
 
-  <div className="flex gap-3">
-    <Link
-      href="/workers"
-      className="border border-gray-400 bg-white text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100"
-    >
-      Manage Workers
-    </Link>
+            <p className="text-gray-700">
+              View and manage maintenance requests.
+            </p>
+          </div>
 
-    <button
-      onClick={handleLogout}
-      className="bg-black text-white px-4 py-2 rounded-lg"
-    >
-      Log Out
-    </button>
-  </div>
-</div>
+          <div className="flex gap-3">
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Link
+              href="/workers"
+              className="border border-gray-400 bg-white text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100"
+            >
+              Manage Workers
+            </Link>
+
+            <button
+              onClick={handleLogout}
+              className="bg-black text-white px-4 py-2 rounded-lg"
+            >
+              Log Out
+            </button>
+
+          </div>
+
+        </div>
+
+        {/* Request Summary */}
+        <h2 className="text-xl font-bold mb-3">
+          Request Overview
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
           <div className="bg-white p-4 rounded-xl shadow">
             <p className="text-gray-600">
@@ -338,7 +380,58 @@ export default function Dashboard() {
 
         </div>
 
+        {/* Analytics */}
+        <h2 className="text-xl font-bold mb-3">
+          Maintenance Analytics
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+          <div className="bg-white p-4 rounded-xl shadow">
+            <p className="text-gray-600">
+              Total Repair Cost
+            </p>
+
+            <p className="text-3xl font-bold">
+              ${totalRepairCost.toFixed(2)}
+            </p>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl shadow">
+            <p className="text-gray-600">
+              Average Repair Cost
+            </p>
+
+            <p className="text-3xl font-bold">
+              ${averageRepairCost.toFixed(2)}
+            </p>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl shadow">
+            <p className="text-gray-600">
+              Emergency Requests
+            </p>
+
+            <p className="text-3xl font-bold">
+              {emergencyRequests}
+            </p>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl shadow">
+            <p className="text-gray-600">
+              Unassigned Requests
+            </p>
+
+            <p className="text-3xl font-bold">
+              {unassignedRequests}
+            </p>
+          </div>
+
+        </div>
+
+        {/* Filters */}
         <div className="bg-white p-4 rounded-xl shadow mb-6">
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
             <div>
@@ -418,13 +511,16 @@ export default function Dashboard() {
             </div>
 
           </div>
+
         </div>
 
+        {/* Requests Table */}
         <div className="bg-white rounded-xl shadow overflow-x-auto">
 
           <table className="w-full text-gray-900">
 
             <thead className="bg-gray-200">
+
               <tr>
                 <th className="text-left p-4">ID</th>
                 <th className="text-left p-4">Created</th>
@@ -437,11 +533,13 @@ export default function Dashboard() {
                 <th className="text-left p-4">Assigned To</th>
                 <th className="text-left p-4">Status</th>
               </tr>
+
             </thead>
 
             <tbody>
 
               {sortedRequests.map((request) => (
+
                 <tr
                   key={request.id}
                   className={
@@ -452,12 +550,14 @@ export default function Dashboard() {
                 >
 
                   <td className="p-4">
+
                     <Link
                       href={`/request/${request.id}`}
                       className="text-blue-600 underline font-medium"
                     >
                       #{request.id}
                     </Link>
+
                   </td>
 
                   <td className="p-4">
@@ -481,6 +581,7 @@ export default function Dashboard() {
                   </td>
 
                   <td className="p-4">
+
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getPriorityStyle(
                         request.priority
@@ -488,6 +589,7 @@ export default function Dashboard() {
                     >
                       {request.priority}
                     </span>
+
                   </td>
 
                   <td className="p-4">
@@ -495,6 +597,7 @@ export default function Dashboard() {
                   </td>
 
                   <td className="p-4">
+
                     <select
                       value={request.assigned_to || ""}
                       onChange={(event) =>
@@ -505,22 +608,28 @@ export default function Dashboard() {
                       }
                       className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
                     >
+
                       <option value="">
                         Unassigned
                       </option>
 
                       {workers.map((worker) => (
+
                         <option
                           key={worker.id}
                           value={worker.name}
                         >
                           {worker.name}
                         </option>
+
                       ))}
+
                     </select>
+
                   </td>
 
                   <td className="p-4">
+
                     <select
                       value={request.status || "New"}
                       onChange={(event) =>
@@ -531,18 +640,23 @@ export default function Dashboard() {
                       }
                       className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
                     >
+
                       <option>New</option>
                       <option>Assigned</option>
                       <option>In Progress</option>
                       <option>Waiting for Parts</option>
                       <option>Completed</option>
+
                     </select>
+
                   </td>
 
                 </tr>
+
               ))}
 
               {sortedRequests.length === 0 && (
+
                 <tr>
                   <td
                     colSpan="10"
@@ -551,6 +665,7 @@ export default function Dashboard() {
                     No maintenance requests found.
                   </td>
                 </tr>
+
               )}
 
             </tbody>
