@@ -7,22 +7,43 @@ export default function Dashboard() {
   const [requests, setRequests] = useState([]);
 
   useEffect(() => {
-    async function getRequests() {
-      const { data, error } = await supabase
-        .from("maintenance_requests")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      setRequests(data);
-    }
-
     getRequests();
   }, []);
+
+  async function getRequests() {
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setRequests(data);
+  }
+
+  async function updateStatus(id, newStatus) {
+    const { error } = await supabase
+      .from("maintenance_requests")
+      .update({ status: newStatus })
+      .eq("id", id);
+
+    if (error) {
+      console.error(error);
+      alert("There was a problem updating the status.");
+      return;
+    }
+
+    setRequests(
+      requests.map((request) =>
+        request.id === id
+          ? { ...request, status: newStatus }
+          : request
+      )
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
@@ -63,7 +84,22 @@ export default function Dashboard() {
                   <td className="p-4">{request.description}</td>
                   <td className="p-4">{request.priority}</td>
                   <td className="p-4">{request.category}</td>
-                  <td className="p-4">{request.status}</td>
+
+                  <td className="p-4">
+                    <select
+                      value={request.status}
+                      onChange={(event) =>
+                        updateStatus(request.id, event.target.value)
+                      }
+                      className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+                    >
+                      <option>New</option>
+                      <option>Assigned</option>
+                      <option>In Progress</option>
+                      <option>Waiting for Parts</option>
+                      <option>Completed</option>
+                    </select>
+                  </td>
                 </tr>
               ))}
             </tbody>
