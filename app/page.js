@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "../lib/supabase";
 
 export default function Home() {
   const [formData, setFormData] = useState({
@@ -21,13 +22,39 @@ export default function Home() {
     });
   }
 
-  function handleSubmit(event) {
-    event.preventDefault();
+  async function handleSubmit(event) {
+  event.preventDefault();
 
-    console.log(formData);
+  const { error } = await supabase
+    .from("maintenance_requests")
+    .insert([
+      {
+        requester_name: formData.requesterName,
+        department: formData.department,
+        equipment: formData.equipment,
+        description: formData.description,
+        priority: formData.priority,
+        category: formData.category,
+      },
+    ]);
 
-    alert("Maintenance request submitted!");
+  if (error) {
+    console.error(error);
+    alert("There was a problem submitting the request.");
+    return;
   }
+
+  alert("Maintenance request submitted!");
+
+  setFormData({
+    requesterName: "",
+    department: "",
+    equipment: "",
+    description: "",
+    priority: "Medium",
+    category: "Equipment",
+  });
+}
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">
