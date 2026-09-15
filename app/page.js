@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "../lib/supabase";
 
 export default function Home() {
@@ -67,9 +68,19 @@ export default function Home() {
     <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
       <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow">
 
-        <h1 className="text-3xl font-bold mb-2 text-gray-900">
-          Maintenance Request
-        </h1>
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Maintenance Request
+          </h1>
+
+          <Link
+            href="/login"
+            className="bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-800 whitespace-nowrap"
+          >
+            Staff Login
+          </Link>
+        </div>
 
         <p className="text-gray-700 mb-6">
           Submit a maintenance issue below.
