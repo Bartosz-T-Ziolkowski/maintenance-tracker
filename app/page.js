@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 
 export default function Home() {
@@ -33,7 +33,7 @@ export default function Home() {
 
     setSubmitting(true);
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("maintenance_requests")
       .insert([
         {
@@ -44,9 +44,7 @@ export default function Home() {
           priority: formData.priority,
           category: formData.category,
         },
-      ])
-      .select("id")
-      .single();
+      ]);
 
     if (error) {
       console.error(error);
@@ -55,7 +53,7 @@ export default function Home() {
       return;
     }
 
-    router.push(`/success?id=${data.id}`);
+    router.push("/success");
   }
 
   const inputStyle =
@@ -70,6 +68,7 @@ export default function Home() {
 
         {/* Header */}
         <div className="flex items-center justify-between gap-4 mb-2">
+
           <h1 className="text-3xl font-bold text-gray-900">
             Maintenance Request
           </h1>
@@ -80,6 +79,7 @@ export default function Home() {
           >
             Staff Login
           </Link>
+
         </div>
 
         <p className="text-gray-700 mb-6">
@@ -91,6 +91,7 @@ export default function Home() {
           className="space-y-4"
         >
 
+          {/* Requester Name */}
           <div>
             <label className={labelStyle}>
               Requester Name
@@ -106,6 +107,7 @@ export default function Home() {
             />
           </div>
 
+          {/* Department */}
           <div>
             <label className={labelStyle}>
               Department / Location
@@ -121,6 +123,7 @@ export default function Home() {
             />
           </div>
 
+          {/* Equipment */}
           <div>
             <label className={labelStyle}>
               Equipment or Item
@@ -136,6 +139,7 @@ export default function Home() {
             />
           </div>
 
+          {/* Description */}
           <div>
             <label className={labelStyle}>
               Problem Description
@@ -151,6 +155,7 @@ export default function Home() {
             />
           </div>
 
+          {/* Priority */}
           <div>
             <label className={labelStyle}>
               Priority
@@ -162,15 +167,25 @@ export default function Home() {
               onChange={handleChange}
               className={inputStyle}
             >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
+              <option value="Low">
+                Low
+              </option>
+
+              <option value="Medium">
+                Medium
+              </option>
+
+              <option value="High">
+                High
+              </option>
+
               <option value="Emergency">
                 Emergency
               </option>
             </select>
           </div>
 
+          {/* Category */}
           <div>
             <label className={labelStyle}>
               Category
@@ -208,6 +223,7 @@ export default function Home() {
             </select>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={submitting}

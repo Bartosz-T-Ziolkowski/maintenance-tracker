@@ -1,9 +1,6 @@
 import Link from "next/link";
 
-export default async function SuccessPage({ searchParams }) {
-  const params = await searchParams;
-  const requestId = params.id;
-
+export default function SuccessPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
       <div className="max-w-xl mx-auto bg-white p-8 rounded-xl shadow text-center">
@@ -17,24 +14,14 @@ export default async function SuccessPage({ searchParams }) {
         </h1>
 
         <p className="text-gray-600 mb-6">
-          Your maintenance request has been received.
+          Your maintenance request has been received successfully.
         </p>
 
-        {requestId && (
-          <div className="bg-gray-100 rounded-lg p-5 mb-6">
-            <p className="text-gray-600 mb-1">
-              Request Number
-            </p>
-
-            <p className="text-3xl font-bold">
-              #{requestId}
-            </p>
-          </div>
-        )}
-
-        <p className="text-gray-600 mb-6">
-          Please save your request number for reference.
-        </p>
+        <div className="bg-gray-100 rounded-lg p-5 mb-6">
+          <p className="font-semibold">
+            Your request has been sent to the maintenance team.
+          </p>
+        </div>
 
         <Link
           href="/"
