@@ -1,3 +1,5 @@
+This project is a digital maintenance management system being developed for The Angelus, a nonprofit organization in Hudson, Florida. Built with Next.js, React, Tailwind CSS, Supabase, and PostgreSQL, the system is designed to replace a paper-based maintenance request workflow with a centralized platform for submitting, organizing, and tracking requests. The project also includes dashboard and analytics features for monitoring maintenance activity by status, priority, category, and cost.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
