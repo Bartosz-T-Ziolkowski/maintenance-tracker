@@ -1,38 +1,99 @@
-This project is a digital maintenance management system being developed for The Angelus, a nonprofit organization in Hudson, Florida. Built with Next.js, React, Tailwind CSS, Supabase, and PostgreSQL, the system is designed to replace a paper-based maintenance request workflow with a centralized platform for submitting, organizing, and tracking requests. The project also includes dashboard and analytics features for monitoring maintenance activity by status, priority, category, and cost.
+# Maintenance Request Tracking System
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+A web-based maintenance request tracking system developed for **The Angelus**, a nonprofit organization serving adults with developmental disabilities.
 
-## Getting Started
+The application replaces a traditional pen-and-paper maintenance process with a centralized digital system where employees can submit maintenance issues and authorized staff can manage, assign, track, and analyze maintenance requests.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Public Maintenance Requests
+- Submit maintenance requests without creating an account
+- Enter the department or location of the issue
+- Describe the equipment or item requiring maintenance
+- Provide a detailed problem description
+- Select a priority level
+- Categorize the maintenance issue
+- Receive confirmation after submission
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Staff Dashboard
+- Secure staff authentication
+- View active maintenance requests
+- Separate completed requests from active requests
+- Search maintenance requests
+- Filter requests by status and priority
+- Sort requests by date or priority
+- Assign maintenance workers
+- Update request statuses
+- View individual request details
+- Record repair notes and costs
+- Automatically record start and completion dates
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### Worker Management
+- Add maintenance workers
+- Activate or deactivate workers
+- Dynamically assign active workers to maintenance requests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Analytics
+- Track maintenance activity
+- Monitor request statuses
+- Analyze maintenance categories and priorities
+- Review repair costs and completed work
 
-## Learn More
+## Technologies Used
 
-To learn more about Next.js, take a look at the following resources:
+**Frontend**
+- Next.js
+- React
+- JavaScript
+- Tailwind CSS
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Backend and Database**
+- Supabase
+- PostgreSQL
+- Supabase Authentication
+- Row Level Security (RLS)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Deployment**
+- Vercel
 
-## Deploy on Vercel
+**Version Control**
+- Git
+- GitHub
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Security
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The application uses Supabase Row Level Security to separate public and staff access.
+
+Public users can submit maintenance requests without being able to view or modify the maintenance database. Authenticated staff members can access the maintenance dashboard and manage requests.
+
+## How It Works
+
+1. An employee scans a QR code or opens the maintenance request website.
+2. The employee submits a maintenance issue.
+3. The request is stored in the Supabase PostgreSQL database.
+4. Authorized maintenance staff sign in to the dashboard.
+5. Staff assign the request to a maintenance worker.
+6. The request status is updated as work progresses.
+7. Repair notes, costs, and completion information can be recorded.
+8. Completed requests are retained separately for future reference and analysis.
+
+## Purpose
+
+The project was developed to help modernize The Angelus's maintenance workflow. The previous process relied heavily on paper-based tracking, which made it more difficult to organize requests and analyze maintenance activity.
+
+The digital system provides a centralized record of maintenance requests and creates structured data that can be used to identify recurring repairs, monitor completed work, and support future maintenance planning.
+
+## Future Improvements
+
+Potential future improvements include:
+
+- Email notifications for new or updated requests
+- Photo uploads for maintenance issues
+- Preventive maintenance scheduling
+- Additional reporting and analytics
+- Role-based staff permissions
+- Mobile interface improvements
+
+## Project Status
+
+The application is deployed and operational. The public maintenance request form and authenticated staff management system are connected to a cloud-hosted Supabase database.
