@@ -17,6 +17,8 @@ export default function Dashboard() {
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [sortOption, setSortOption] = useState("Newest");
 
+  const [showCompleted, setShowCompleted] = useState(false);
+
   useEffect(() => {
     checkUser();
   }, []);
@@ -170,62 +172,51 @@ export default function Dashboard() {
   }
 
   function getPriorityNumber(priority) {
-    if (priority === "Emergency") {
-      return 4;
-    }
-
-    if (priority === "High") {
-      return 3;
-    }
-
-    if (priority === "Medium") {
-      return 2;
-    }
-
-    if (priority === "Low") {
-      return 1;
-    }
+    if (priority === "Emergency") return 4;
+    if (priority === "High") return 3;
+    if (priority === "Medium") return 2;
+    if (priority === "Low") return 1;
 
     return 0;
   }
 
-  const filteredRequests = requests.filter((request) => {
-    const searchText = search.toLowerCase();
+  function filterAndSortRequests(requestList) {
+    const filtered = requestList.filter((request) => {
+      const searchText = search.toLowerCase();
 
-    const matchesSearch =
-      request.requester_name
-        ?.toLowerCase()
-        .includes(searchText) ||
-      request.department
-        ?.toLowerCase()
-        .includes(searchText) ||
-      request.equipment
-        ?.toLowerCase()
-        .includes(searchText) ||
-      request.description
-        ?.toLowerCase()
-        .includes(searchText) ||
-      request.category
-        ?.toLowerCase()
-        .includes(searchText);
+      const matchesSearch =
+        request.requester_name
+          ?.toLowerCase()
+          .includes(searchText) ||
+        request.department
+          ?.toLowerCase()
+          .includes(searchText) ||
+        request.equipment
+          ?.toLowerCase()
+          .includes(searchText) ||
+        request.description
+          ?.toLowerCase()
+          .includes(searchText) ||
+        request.category
+          ?.toLowerCase()
+          .includes(searchText);
 
-    const matchesStatus =
-      statusFilter === "All" ||
-      request.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "All" ||
+        request.status === statusFilter;
 
-    const matchesPriority =
-      priorityFilter === "All" ||
-      request.priority === priorityFilter;
+      const matchesPriority =
+        priorityFilter === "All" ||
+        request.priority === priorityFilter;
 
-    return (
-      matchesSearch &&
-      matchesStatus &&
-      matchesPriority
-    );
-  });
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesPriority
+      );
+    });
 
-  const sortedRequests = [...filteredRequests].sort(
-    (a, b) => {
+    return [...filtered].sort((a, b) => {
       if (sortOption === "Newest") {
         return (
           new Date(b.created_at) -
@@ -255,11 +246,26 @@ export default function Dashboard() {
       }
 
       return 0;
-    }
+    });
+  }
+
+  // Separate active and completed requests
+  const activeRequests = requests.filter(
+    (request) => request.status !== "Completed"
   );
 
-  // Request overview
-  const totalRequests = requests.length;
+  const completedRequests = requests.filter(
+    (request) => request.status === "Completed"
+  );
+
+  const filteredActiveRequests =
+    filterAndSortRequests(activeRequests);
+
+  const filteredCompletedRequests =
+    filterAndSortRequests(completedRequests);
+
+  // Dashboard statistics
+  const totalActive = activeRequests.length;
 
   const newRequests = requests.filter(
     (request) => request.status === "New"
@@ -269,78 +275,142 @@ export default function Dashboard() {
     (request) => request.status === "In Progress"
   ).length;
 
-  const completedRequests = requests.filter(
-    (request) => request.status === "Completed"
-  ).length;
+  const totalCompleted = completedRequests.length;
 
-  // Cost analytics
-  const totalRepairCost = requests.reduce(
-    (total, request) =>
-      total + Number(request.cost || 0),
-    0
-  );
+  function RequestTable({ requestList }) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full text-gray-900">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="text-left p-4">ID</th>
+              <th className="text-left p-4">Created</th>
+              <th className="text-left p-4">Requester</th>
+              <th className="text-left p-4">Location</th>
+              <th className="text-left p-4">Equipment</th>
+              <th className="text-left p-4">Problem</th>
+              <th className="text-left p-4">Priority</th>
+              <th className="text-left p-4">Category</th>
+              <th className="text-left p-4">Assigned To</th>
+              <th className="text-left p-4">Status</th>
+            </tr>
+          </thead>
 
-  const requestsWithCost = requests.filter(
-    (request) =>
-      request.cost !== null &&
-      request.cost !== "" &&
-      Number(request.cost) > 0
-  );
+          <tbody>
+            {requestList.map((request) => (
+              <tr
+                key={request.id}
+                className={
+                  request.priority === "Emergency"
+                    ? "border-t bg-red-50"
+                    : "border-t"
+                }
+              >
+                <td className="p-4">
+                  <Link
+                    href={`/request/${request.id}`}
+                    className="text-blue-600 underline font-medium"
+                  >
+                    #{request.id}
+                  </Link>
+                </td>
 
-  const averageRepairCost =
-    requestsWithCost.length > 0
-      ? requestsWithCost.reduce(
-          (total, request) =>
-            total + Number(request.cost),
-          0
-        ) / requestsWithCost.length
-      : 0;
+                <td className="p-4">
+                  {formatDate(request.created_at)}
+                </td>
 
-  const emergencyRequests = requests.filter(
-    (request) =>
-      request.priority === "Emergency"
-  ).length;
+                <td className="p-4">
+                  {request.requester_name}
+                </td>
 
-  const unassignedRequests = requests.filter(
-    (request) => !request.assigned_to
-  ).length;
+                <td className="p-4">
+                  {request.department}
+                </td>
 
-  // Completion time analytics
-  const completedWithDates = requests.filter(
-    (request) =>
-      request.date_started &&
-      request.date_completed
-  );
+                <td className="p-4">
+                  {request.equipment}
+                </td>
 
-  const totalCompletionDays =
-    completedWithDates.reduce(
-      (total, request) => {
-        const startDate = new Date(
-          `${request.date_started}T00:00:00`
-        );
+                <td className="p-4">
+                  {request.description}
+                </td>
 
-        const completedDate = new Date(
-          `${request.date_completed}T00:00:00`
-        );
+                <td className="p-4">
+                  <span
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getPriorityStyle(
+                      request.priority
+                    )}`}
+                  >
+                    {request.priority}
+                  </span>
+                </td>
 
-        const difference =
-          completedDate.getTime() -
-          startDate.getTime();
+                <td className="p-4">
+                  {request.category}
+                </td>
 
-        const days =
-          difference /
-          (1000 * 60 * 60 * 24);
+                <td className="p-4">
+                  <select
+                    value={request.assigned_to || ""}
+                    onChange={(event) =>
+                      updateAssignedTo(
+                        request.id,
+                        event.target.value
+                      )
+                    }
+                    className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+                  >
+                    <option value="">
+                      Unassigned
+                    </option>
 
-        return total + days;
-      },
-      0
+                    {workers.map((worker) => (
+                      <option
+                        key={worker.id}
+                        value={worker.name}
+                      >
+                        {worker.name}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+
+                <td className="p-4">
+                  <select
+                    value={request.status || "New"}
+                    onChange={(event) =>
+                      updateStatus(
+                        request.id,
+                        event.target.value
+                      )
+                    }
+                    className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+                  >
+                    <option>New</option>
+                    <option>Assigned</option>
+                    <option>In Progress</option>
+                    <option>Waiting for Parts</option>
+                    <option>Completed</option>
+                  </select>
+                </td>
+              </tr>
+            ))}
+
+            {requestList.length === 0 && (
+              <tr>
+                <td
+                  colSpan="10"
+                  className="p-8 text-center text-gray-500"
+                >
+                  No maintenance requests found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     );
-
-  const averageCompletionTime =
-    completedWithDates.length > 0
-      ? totalCompletionDays /
-        completedWithDates.length
-      : 0;
+  }
 
   if (loading) {
     return (
@@ -355,6 +425,7 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}
+
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold">
@@ -367,42 +438,42 @@ export default function Dashboard() {
           </div>
 
           <div className="flex gap-3">
+
             <Link
               href="/analytics"
-              className="border border-gray-400 bg-white text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100"
+              className="bg-white border border-gray-400 px-4 py-2 rounded-lg font-semibold"
             >
               Analytics
             </Link>
 
             <Link
               href="/workers"
-              className="border border-gray-400 bg-white text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100"
+              className="bg-white border border-gray-400 px-4 py-2 rounded-lg font-semibold"
             >
               Manage Workers
             </Link>
 
             <button
               onClick={handleLogout}
-              className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+              className="bg-black text-white px-4 py-2 rounded-lg"
             >
               Log Out
             </button>
+
           </div>
         </div>
 
-        {/* Request Overview */}
-        <h2 className="text-xl font-bold mb-3">
-          Request Overview
-        </h2>
+        {/* Summary Cards */}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
           <div className="bg-white p-4 rounded-xl shadow">
             <p className="text-gray-600">
-              Total Requests
+              Active Requests
             </p>
 
             <p className="text-3xl font-bold">
-              {totalRequests}
+              {totalActive}
             </p>
           </div>
 
@@ -432,69 +503,14 @@ export default function Dashboard() {
             </p>
 
             <p className="text-3xl font-bold">
-              {completedRequests}
-            </p>
-          </div>
-        </div>
-
-        {/* Maintenance Analytics */}
-        <h2 className="text-xl font-bold mb-3">
-          Maintenance Analytics
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">
-              Total Repair Cost
-            </p>
-
-            <p className="text-2xl font-bold">
-              ${totalRepairCost.toFixed(2)}
+              {totalCompleted}
             </p>
           </div>
 
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">
-              Average Repair Cost
-            </p>
-
-            <p className="text-2xl font-bold">
-              ${averageRepairCost.toFixed(2)}
-            </p>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">
-              Average Completion Time
-            </p>
-
-            <p className="text-2xl font-bold">
-              {averageCompletionTime.toFixed(1)} days
-            </p>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">
-              Emergency Requests
-            </p>
-
-            <p className="text-2xl font-bold">
-              {emergencyRequests}
-            </p>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">
-              Unassigned Requests
-            </p>
-
-            <p className="text-2xl font-bold">
-              {unassignedRequests}
-            </p>
-          </div>
         </div>
 
         {/* Filters */}
+
         <div className="bg-white p-4 rounded-xl shadow mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
@@ -522,9 +538,7 @@ export default function Dashboard() {
               <select
                 value={statusFilter}
                 onChange={(event) =>
-                  setStatusFilter(
-                    event.target.value
-                  )
+                  setStatusFilter(event.target.value)
                 }
                 className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
               >
@@ -533,7 +547,6 @@ export default function Dashboard() {
                 <option>Assigned</option>
                 <option>In Progress</option>
                 <option>Waiting for Parts</option>
-                <option>Completed</option>
               </select>
             </div>
 
@@ -545,9 +558,7 @@ export default function Dashboard() {
               <select
                 value={priorityFilter}
                 onChange={(event) =>
-                  setPriorityFilter(
-                    event.target.value
-                  )
+                  setPriorityFilter(event.target.value)
                 }
                 className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
               >
@@ -567,208 +578,78 @@ export default function Dashboard() {
               <select
                 value={sortOption}
                 onChange={(event) =>
-                  setSortOption(
-                    event.target.value
-                  )
+                  setSortOption(event.target.value)
                 }
                 className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
               >
                 <option>Newest</option>
                 <option>Oldest</option>
-                <option>
-                  Highest Priority
-                </option>
-                <option>
-                  Lowest Priority
-                </option>
+                <option>Highest Priority</option>
+                <option>Lowest Priority</option>
               </select>
             </div>
 
           </div>
         </div>
 
-        {/* Requests Table */}
-        <div className="bg-white rounded-xl shadow overflow-x-auto">
-          <table className="w-full text-gray-900">
+        {/* Active Requests */}
 
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="text-left p-4">
-                  ID
-                </th>
-                <th className="text-left p-4">
-                  Created
-                </th>
-                <th className="text-left p-4">
-                  Requester
-                </th>
-                <th className="text-left p-4">
-                  Location
-                </th>
-                <th className="text-left p-4">
-                  Equipment
-                </th>
-                <th className="text-left p-4">
-                  Problem
-                </th>
-                <th className="text-left p-4">
-                  Priority
-                </th>
-                <th className="text-left p-4">
-                  Category
-                </th>
-                <th className="text-left p-4">
-                  Assigned To
-                </th>
-                <th className="text-left p-4">
-                  Status
-                </th>
-              </tr>
-            </thead>
+        <div className="bg-white rounded-xl shadow mb-6">
 
-            <tbody>
-              {sortedRequests.map(
-                (request) => (
-                  <tr
-                    key={request.id}
-                    className={
-                      request.priority ===
-                      "Emergency"
-                        ? "border-t bg-red-50"
-                        : "border-t"
-                    }
-                  >
-                    <td className="p-4">
-                      <Link
-                        href={`/request/${request.id}`}
-                        className="text-blue-600 underline font-medium"
-                      >
-                        #{request.id}
-                      </Link>
-                    </td>
+          <div className="p-4 border-b">
+            <h2 className="text-xl font-bold">
+              Active Requests
+            </h2>
 
-                    <td className="p-4">
-                      {formatDate(
-                        request.created_at
-                      )}
-                    </td>
+            <p className="text-gray-600 text-sm">
+              Requests that still require attention.
+            </p>
+          </div>
 
-                    <td className="p-4">
-                      {request.requester_name}
-                    </td>
+          <RequestTable
+            requestList={filteredActiveRequests}
+          />
 
-                    <td className="p-4">
-                      {request.department}
-                    </td>
-
-                    <td className="p-4">
-                      {request.equipment}
-                    </td>
-
-                    <td className="p-4">
-                      {request.description}
-                    </td>
-
-                    <td className="p-4">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getPriorityStyle(
-                          request.priority
-                        )}`}
-                      >
-                        {request.priority}
-                      </span>
-                    </td>
-
-                    <td className="p-4">
-                      {request.category}
-                    </td>
-
-                    <td className="p-4">
-                      <select
-                        value={
-                          request.assigned_to ||
-                          ""
-                        }
-                        onChange={(event) =>
-                          updateAssignedTo(
-                            request.id,
-                            event.target.value
-                          )
-                        }
-                        className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
-                      >
-                        <option value="">
-                          Unassigned
-                        </option>
-
-                        {workers.map(
-                          (worker) => (
-                            <option
-                              key={
-                                worker.id
-                              }
-                              value={
-                                worker.name
-                              }
-                            >
-                              {
-                                worker.name
-                              }
-                            </option>
-                          )
-                        )}
-                      </select>
-                    </td>
-
-                    <td className="p-4">
-                      <select
-                        value={
-                          request.status ||
-                          "New"
-                        }
-                        onChange={(event) =>
-                          updateStatus(
-                            request.id,
-                            event.target.value
-                          )
-                        }
-                        className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
-                      >
-                        <option>New</option>
-                        <option>
-                          Assigned
-                        </option>
-                        <option>
-                          In Progress
-                        </option>
-                        <option>
-                          Waiting for Parts
-                        </option>
-                        <option>
-                          Completed
-                        </option>
-                      </select>
-                    </td>
-                  </tr>
-                )
-              )}
-
-              {sortedRequests.length ===
-                0 && (
-                <tr>
-                  <td
-                    colSpan="10"
-                    className="p-8 text-center text-gray-500"
-                  >
-                    No maintenance requests
-                    found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-
-          </table>
         </div>
+
+        {/* Completed Requests Button */}
+
+        <button
+          onClick={() =>
+            setShowCompleted(!showCompleted)
+          }
+          className="w-full bg-white border border-gray-300 shadow rounded-xl p-4 font-semibold text-left flex justify-between items-center"
+        >
+          <span>
+            Completed Requests ({totalCompleted})
+          </span>
+
+          <span>
+            {showCompleted ? "▲ Hide" : "▼ View"}
+          </span>
+        </button>
+
+        {/* Completed Requests */}
+
+        {showCompleted && (
+          <div className="bg-white rounded-xl shadow mt-4 mb-6">
+
+            <div className="p-4 border-b">
+              <h2 className="text-xl font-bold">
+                Completed Requests
+              </h2>
+
+              <p className="text-gray-600 text-sm">
+                Previously completed maintenance work.
+              </p>
+            </div>
+
+            <RequestTable
+              requestList={filteredCompletedRequests}
+            />
+
+          </div>
+        )}
 
       </div>
     </main>
