@@ -83,6 +83,26 @@ The project was developed to help modernize The Angelus's maintenance workflow. 
 
 The digital system provides a centralized record of maintenance requests and creates structured data that can be used to identify recurring repairs, monitor completed work, and support future maintenance planning.
 
+## Screenshots
+
+### Maintenance Request Form
+![Maintenance Request Form](screenshots/request-form.png)
+
+### Staff Dashboard
+![Staff Dashboard](screenshots/dashboard.png)
+
+### Request Details
+![Request Details](screenshots/request-details.png)
+
+### Maintenance Analytics
+![Maintenance Analytics](screenshots/analytics.png)
+
+### Worker Management
+![Worker Management](screenshots/worker-management.png)
+
+### Staff Login
+![Staff Login](screenshots/staff-login.png)
+
 ## Future Improvements
 
 Potential future improvements include:
