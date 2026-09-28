@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 
 export default function Login() {
@@ -86,6 +87,21 @@ export default function Login() {
           </button>
 
         </form>
+
+        <div className="border-t border-gray-200 mt-6 pt-6 text-center">
+
+          <p className="text-gray-600 mb-3">
+            Not a maintenance staff member?
+          </p>
+
+          <Link
+            href="/"
+            className="inline-block w-full border border-gray-400 text-gray-900 p-3 rounded-lg font-semibold hover:bg-gray-100"
+          >
+            Back to Request Form
+          </Link>
+
+        </div>
 
       </div>
     </main>
