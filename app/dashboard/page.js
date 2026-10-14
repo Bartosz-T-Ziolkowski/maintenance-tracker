@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,92 +6,357 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
+const STATUSES = [
+  "New",
+  "Assigned",
+  "In Progress",
+  "Waiting for Parts",
+  "Completed",
+];
+
+function getPriorityNumber(priority) {
+  if (priority === "Emergency") return 4;
+  if (priority === "High") return 3;
+  if (priority === "Medium") return 2;
+  if (priority === "Low") return 1;
+  return 0;
+}
+
+function getPriorityStyle(priority) {
+  if (priority === "Emergency")
+    return "bg-red-100 text-red-800 border-red-200";
+  if (priority === "High")
+    return "bg-orange-100 text-orange-800 border-orange-200";
+  if (priority === "Medium")
+    return "bg-yellow-100 text-yellow-800 border-yellow-200";
+  if (priority === "Low")
+    return "bg-green-100 text-green-800 border-green-200";
+  return "bg-gray-100 text-gray-800 border-gray-200";
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString();
+}
+
+function WorkerSelect({ request, workers, onChange }) {
+  const assigned = request.assigned_to || "";
+
+  return (
+    <select
+      aria-label={`Worker for request ${request.id}`}
+      value={assigned}
+      onChange={(event) =>
+        onChange(request.id, event.target.value)
+      }
+      className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900"
+    >
+      <option value="">Unassigned</option>
+      {assigned &&
+        !workers.some((worker) => worker.name === assigned) && (
+          <option value={assigned}>{assigned} (Inactive)</option>
+        )}
+      {workers.map((worker) => (
+        <option key={worker.id} value={worker.name}>
+          {worker.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function StatusSelect({ request, onChange }) {
+  return (
+    <select
+      aria-label={`Status for request ${request.id}`}
+      value={request.status || "New"}
+      onChange={(event) =>
+        onChange(request.id, event.target.value)
+      }
+      className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900"
+    >
+      {STATUSES.map((status) => (
+        <option key={status} value={status}>
+          {status}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function RequestList({
+  requests,
+  workers,
+  onStatusChange,
+  onWorkerChange,
+}) {
+  if (requests.length === 0) {
+    return (
+      <div className="p-8 text-center text-sm text-gray-500">
+        No maintenance requests found.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Mobile cards */}
+      <div className="space-y-3 p-3 md:hidden">
+        {requests.map((request) => (
+          <article
+            key={request.id}
+            className={`rounded-xl border p-4 ${
+              request.priority === "Emergency"
+                ? "border-red-200 bg-red-50"
+                : "border-gray-200 bg-white"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <Link
+                  href={`/request/${request.id}`}
+                  className="text-lg font-bold text-blue-700 hover:underline"
+                >
+                  Request #{request.id}
+                </Link>
+                <p className="mt-1 text-xs text-gray-500">
+                  {formatDate(request.created_at)}
+                </p>
+              </div>
+
+              <span
+                className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${getPriorityStyle(
+                  request.priority
+                )}`}
+              >
+                {request.priority}
+              </span>
+            </div>
+
+            <div className="mt-4 space-y-2 text-sm">
+              <div>
+                <p className="text-xs text-gray-500">Location</p>
+                <p className="font-medium break-words">
+                  {request.department}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500">Equipment</p>
+                <p className="font-medium break-words">
+                  {request.equipment}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500">Problem</p>
+                <p className="break-words text-gray-700">
+                  {request.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-gray-500">Requester</p>
+                  <p className="font-medium break-words">
+                    {request.requester_name}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Category</p>
+                  <p className="font-medium break-words">
+                    {request.category}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 border-t border-gray-200 pt-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600">
+                  Assigned Worker
+                </label>
+                <WorkerSelect
+                  request={request}
+                  workers={workers}
+                  onChange={onWorkerChange}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600">
+                  Status
+                </label>
+                <StatusSelect
+                  request={request}
+                  onChange={onStatusChange}
+                />
+              </div>
+            </div>
+
+            <Link
+              href={`/request/${request.id}`}
+              className="mt-4 block rounded-lg bg-gray-900 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-gray-800"
+            >
+              View Request Details →
+            </Link>
+          </article>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full min-w-[1150px] text-left text-sm">
+          <thead className="bg-gray-100 text-gray-700">
+            <tr>
+              {[
+                "ID",
+                "Created",
+                "Requester",
+                "Location",
+                "Equipment",
+                "Problem",
+                "Priority",
+                "Category",
+                "Assigned To",
+                "Status",
+              ].map((heading) => (
+                <th key={heading} className="p-3 font-semibold">
+                  {heading}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {requests.map((request) => (
+              <tr
+                key={request.id}
+                className={`border-t border-gray-200 ${
+                  request.priority === "Emergency"
+                    ? "bg-red-50"
+                    : "hover:bg-gray-50"
+                }`}
+              >
+                <td className="p-3">
+                  <Link
+                    href={`/request/${request.id}`}
+                    className="font-semibold text-blue-700 underline"
+                  >
+                    #{request.id}
+                  </Link>
+                </td>
+                <td className="whitespace-nowrap p-3">
+                  {formatDate(request.created_at)}
+                </td>
+                <td className="p-3">{request.requester_name}</td>
+                <td className="p-3">{request.department}</td>
+                <td className="p-3">{request.equipment}</td>
+                <td className="max-w-xs p-3">
+                  <p className="line-clamp-3 break-words">
+                    {request.description}
+                  </p>
+                </td>
+                <td className="p-3">
+                  <span
+                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getPriorityStyle(
+                      request.priority
+                    )}`}
+                  >
+                    {request.priority}
+                  </span>
+                </td>
+                <td className="p-3">{request.category}</td>
+                <td className="min-w-36 p-3">
+                  <WorkerSelect
+                    request={request}
+                    workers={workers}
+                    onChange={onWorkerChange}
+                  />
+                </td>
+                <td className="min-w-40 p-3">
+                  <StatusSelect
+                    request={request}
+                    onChange={onStatusChange}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
 export default function Dashboard() {
   const router = useRouter();
 
   const [requests, setRequests] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [sortOption, setSortOption] = useState("Newest");
 
-  const [showCompleted, setShowCompleted] = useState(false);
-
   useEffect(() => {
-    checkUser();
-  }, []);
+    async function loadDashboard() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  async function checkUser() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
 
-    if (!user) {
-      router.push("/login");
-      return;
+      const [requestsResult, workersResult] = await Promise.all([
+        supabase
+          .from("maintenance_requests")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("workers")
+          .select("*")
+          .eq("active", true)
+          .order("name", { ascending: true }),
+      ]);
+
+      if (requestsResult.error) {
+        console.error(requestsResult.error);
+      } else {
+        setRequests(requestsResult.data || []);
+      }
+
+      if (workersResult.error) {
+        console.error(workersResult.error);
+      } else {
+        setWorkers(workersResult.data || []);
+      }
+
+      setLoading(false);
     }
 
-    await Promise.all([getRequests(), getWorkers()]);
-    setLoading(false);
-  }
-
-  async function getRequests() {
-    const { data, error } = await supabase
-      .from("maintenance_requests")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    setRequests(data);
-  }
-
-  async function getWorkers() {
-    const { data, error } = await supabase
-      .from("workers")
-      .select("*")
-      .eq("active", true)
-      .order("name", { ascending: true });
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    setWorkers(data);
-  }
+    loadDashboard();
+  }, [router]);
 
   async function updateStatus(id, newStatus) {
-    const today = new Date().toISOString().split("T")[0];
+    const current = requests.find((request) => request.id === id);
+    if (!current) return;
 
-    const currentRequest = requests.find(
-      (request) => request.id === id
-    );
+    const today = new Date().toLocaleDateString("en-CA");
+    const updates = { status: newStatus };
 
-    const updates = {
-      status: newStatus,
-    };
-
-    if (
-      newStatus === "In Progress" &&
-      !currentRequest.date_started
-    ) {
+    if (newStatus === "In Progress" && !current.date_started) {
       updates.date_started = today;
     }
 
-    if (
-      newStatus === "Completed" &&
-      !currentRequest.date_completed
-    ) {
+    if (newStatus === "Completed" && !current.date_completed) {
       updates.date_completed = today;
 
-      if (!currentRequest.date_started) {
+      if (!current.date_started) {
         updates.date_started = today;
       }
     }
@@ -106,8 +372,8 @@ export default function Dashboard() {
       return;
     }
 
-    setRequests(
-      requests.map((request) =>
+    setRequests((previous) =>
+      previous.map((request) =>
         request.id === id
           ? { ...request, ...updates }
           : request
@@ -118,9 +384,7 @@ export default function Dashboard() {
   async function updateAssignedTo(id, assignedTo) {
     const { error } = await supabase
       .from("maintenance_requests")
-      .update({
-        assigned_to: assignedTo || null,
-      })
+      .update({ assigned_to: assignedTo || null })
       .eq("id", id);
 
     if (error) {
@@ -129,127 +393,77 @@ export default function Dashboard() {
       return;
     }
 
-    setRequests(
-      requests.map((request) =>
+    setRequests((previous) =>
+      previous.map((request) =>
         request.id === id
-          ? { ...request, assigned_to: assignedTo }
+          ? { ...request, assigned_to: assignedTo || null }
           : request
       )
     );
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      alert("There was a problem logging out.");
+      return;
+    }
+
     router.push("/login");
   }
 
-  function formatDate(dateString) {
-    if (!dateString) {
-      return "";
-    }
+  function filterAndSortRequests(list, isCompleted = false) {
+    const searchText = search.trim().toLowerCase();
 
-    return new Date(dateString).toLocaleDateString();
+    return list
+      .filter((request) => {
+        const searchableFields = [
+          request.id,
+          request.requester_name,
+          request.department,
+          request.equipment,
+          request.description,
+          request.category,
+          request.assigned_to,
+        ];
+
+        const matchesSearch = searchableFields.some((field) =>
+          String(field ?? "").toLowerCase().includes(searchText)
+        );
+
+        const matchesStatus =
+          isCompleted ||
+          statusFilter === "All" ||
+          request.status === statusFilter;
+
+        const matchesPriority =
+          priorityFilter === "All" ||
+          request.priority === priorityFilter;
+
+        return matchesSearch && matchesStatus && matchesPriority;
+      })
+      .sort((a, b) => {
+        if (sortOption === "Newest") {
+          return new Date(b.created_at) - new Date(a.created_at);
+        }
+
+        if (sortOption === "Oldest") {
+          return new Date(a.created_at) - new Date(b.created_at);
+        }
+
+        if (sortOption === "Highest Priority") {
+          return getPriorityNumber(b.priority) - getPriorityNumber(a.priority);
+        }
+
+        if (sortOption === "Lowest Priority") {
+          return getPriorityNumber(a.priority) - getPriorityNumber(b.priority);
+        }
+
+        return 0;
+      });
   }
 
-  function getPriorityStyle(priority) {
-    if (priority === "Emergency") {
-      return "bg-red-100 text-red-800 border border-red-300";
-    }
-
-    if (priority === "High") {
-      return "bg-orange-100 text-orange-800 border border-orange-300";
-    }
-
-    if (priority === "Medium") {
-      return "bg-yellow-100 text-yellow-800 border border-yellow-300";
-    }
-
-    if (priority === "Low") {
-      return "bg-green-100 text-green-800 border border-green-300";
-    }
-
-    return "bg-gray-100 text-gray-800 border border-gray-300";
-  }
-
-  function getPriorityNumber(priority) {
-    if (priority === "Emergency") return 4;
-    if (priority === "High") return 3;
-    if (priority === "Medium") return 2;
-    if (priority === "Low") return 1;
-
-    return 0;
-  }
-
-  function filterAndSortRequests(requestList) {
-    const filtered = requestList.filter((request) => {
-      const searchText = search.toLowerCase();
-
-      const matchesSearch =
-        request.requester_name
-          ?.toLowerCase()
-          .includes(searchText) ||
-        request.department
-          ?.toLowerCase()
-          .includes(searchText) ||
-        request.equipment
-          ?.toLowerCase()
-          .includes(searchText) ||
-        request.description
-          ?.toLowerCase()
-          .includes(searchText) ||
-        request.category
-          ?.toLowerCase()
-          .includes(searchText);
-
-      const matchesStatus =
-        statusFilter === "All" ||
-        request.status === statusFilter;
-
-      const matchesPriority =
-        priorityFilter === "All" ||
-        request.priority === priorityFilter;
-
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesPriority
-      );
-    });
-
-    return [...filtered].sort((a, b) => {
-      if (sortOption === "Newest") {
-        return (
-          new Date(b.created_at) -
-          new Date(a.created_at)
-        );
-      }
-
-      if (sortOption === "Oldest") {
-        return (
-          new Date(a.created_at) -
-          new Date(b.created_at)
-        );
-      }
-
-      if (sortOption === "Highest Priority") {
-        return (
-          getPriorityNumber(b.priority) -
-          getPriorityNumber(a.priority)
-        );
-      }
-
-      if (sortOption === "Lowest Priority") {
-        return (
-          getPriorityNumber(a.priority) -
-          getPriorityNumber(b.priority)
-        );
-      }
-
-      return 0;
-    });
-  }
-
-  // Separate active and completed requests
   const activeRequests = requests.filter(
     (request) => request.status !== "Completed"
   );
@@ -258,311 +472,172 @@ export default function Dashboard() {
     (request) => request.status === "Completed"
   );
 
-  const filteredActiveRequests =
-    filterAndSortRequests(activeRequests);
+  const filteredActiveRequests = filterAndSortRequests(activeRequests);
+  const filteredCompletedRequests = filterAndSortRequests(
+    completedRequests,
+    true
+  );
 
-  const filteredCompletedRequests =
-    filterAndSortRequests(completedRequests);
-
-  // Dashboard statistics
-  const totalActive = activeRequests.length;
-
-  const newRequests = requests.filter(
-    (request) => request.status === "New"
-  ).length;
-
-  const inProgressRequests = requests.filter(
-    (request) => request.status === "In Progress"
-  ).length;
-
-  const totalCompleted = completedRequests.length;
-
-  function RequestTable({ requestList }) {
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-gray-900">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="text-left p-4">ID</th>
-              <th className="text-left p-4">Created</th>
-              <th className="text-left p-4">Requester</th>
-              <th className="text-left p-4">Location</th>
-              <th className="text-left p-4">Equipment</th>
-              <th className="text-left p-4">Problem</th>
-              <th className="text-left p-4">Priority</th>
-              <th className="text-left p-4">Category</th>
-              <th className="text-left p-4">Assigned To</th>
-              <th className="text-left p-4">Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {requestList.map((request) => (
-              <tr
-                key={request.id}
-                className={
-                  request.priority === "Emergency"
-                    ? "border-t bg-red-50"
-                    : "border-t"
-                }
-              >
-                <td className="p-4">
-                  <Link
-                    href={`/request/${request.id}`}
-                    className="text-blue-600 underline font-medium"
-                  >
-                    #{request.id}
-                  </Link>
-                </td>
-
-                <td className="p-4">
-                  {formatDate(request.created_at)}
-                </td>
-
-                <td className="p-4">
-                  {request.requester_name}
-                </td>
-
-                <td className="p-4">
-                  {request.department}
-                </td>
-
-                <td className="p-4">
-                  {request.equipment}
-                </td>
-
-                <td className="p-4">
-                  {request.description}
-                </td>
-
-                <td className="p-4">
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getPriorityStyle(
-                      request.priority
-                    )}`}
-                  >
-                    {request.priority}
-                  </span>
-                </td>
-
-                <td className="p-4">
-                  {request.category}
-                </td>
-
-                <td className="p-4">
-                  <select
-                    value={request.assigned_to || ""}
-                    onChange={(event) =>
-                      updateAssignedTo(
-                        request.id,
-                        event.target.value
-                      )
-                    }
-                    className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
-                  >
-                    <option value="">
-                      Unassigned
-                    </option>
-
-                    {workers.map((worker) => (
-                      <option
-                        key={worker.id}
-                        value={worker.name}
-                      >
-                        {worker.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-
-                <td className="p-4">
-                  <select
-                    value={request.status || "New"}
-                    onChange={(event) =>
-                      updateStatus(
-                        request.id,
-                        event.target.value
-                      )
-                    }
-                    className="border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
-                  >
-                    <option>New</option>
-                    <option>Assigned</option>
-                    <option>In Progress</option>
-                    <option>Waiting for Parts</option>
-                    <option>Completed</option>
-                  </select>
-                </td>
-              </tr>
-            ))}
-
-            {requestList.length === 0 && (
-              <tr>
-                <td
-                  colSpan="10"
-                  className="p-8 text-center text-gray-500"
-                >
-                  No maintenance requests found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
+  const statistics = [
+    { label: "Active Requests", value: activeRequests.length },
+    {
+      label: "New",
+      value: requests.filter((request) => request.status === "New").length,
+    },
+    {
+      label: "In Progress",
+      value: requests.filter(
+        (request) => request.status === "In Progress"
+      ).length,
+    },
+    { label: "Completed", value: completedRequests.length },
+  ];
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
-        <p>Loading dashboard...</p>
+      <main className="min-h-screen bg-gray-100 p-4 text-gray-900">
+        Loading dashboard...
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
-      <div className="max-w-7xl mx-auto">
-
+    <main className="min-h-screen min-w-0 bg-gray-100 px-3 py-5 text-gray-900 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-7xl min-w-0">
         {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                Maintenance Dashboard
+              </h1>
+              <p className="mt-1 text-sm text-gray-600 sm:text-base">
+                View and manage maintenance requests.
+              </p>
+            </div>
 
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">
-              Maintenance Dashboard
-            </h1>
-
-            <p className="text-gray-700">
-              View and manage maintenance requests.
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-
-            <Link
-              href="/analytics"
-              className="bg-white border border-gray-400 px-4 py-2 rounded-lg font-semibold"
-            >
-              Analytics
-            </Link>
-
-            <Link
-              href="/workers"
-              className="bg-white border border-gray-400 px-4 py-2 rounded-lg font-semibold"
-            >
-              Manage Workers
-            </Link>
-
+            {/* Mobile menu button */}
             <button
-              onClick={handleLogout}
-              className="bg-black text-white px-4 py-2 rounded-lg"
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-expanded={menuOpen}
+              aria-label="Toggle navigation menu"
+              className="shrink-0 rounded-lg border border-gray-300 bg-white p-3 shadow-sm lg:hidden"
             >
-              Log Out
+              {menuOpen ? "✕" : "☰"}
             </button>
 
+            {/* Desktop navigation */}
+            <div className="hidden shrink-0 items-center gap-2 lg:flex">
+              <Link
+                href="/analytics"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 font-semibold hover:bg-gray-50"
+              >
+                Analytics
+              </Link>
+              <Link
+                href="/workers"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 font-semibold hover:bg-gray-50"
+              >
+                Manage Workers
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="rounded-lg bg-gray-900 px-4 py-2.5 font-semibold text-white hover:bg-gray-800"
+              >
+                Log Out
+              </button>
+            </div>
           </div>
+
+          {/* Mobile navigation */}
+          {menuOpen && (
+            <nav className="mt-4 space-y-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm lg:hidden">
+              <Link
+                href="/analytics"
+                className="block rounded-lg px-4 py-3 font-medium hover:bg-gray-100"
+              >
+                Analytics
+              </Link>
+              <Link
+                href="/workers"
+                className="block rounded-lg px-4 py-3 font-medium hover:bg-gray-100"
+              >
+                Manage Workers
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="w-full rounded-lg bg-gray-900 px-4 py-3 text-left font-medium text-white"
+              >
+                Log Out
+              </button>
+            </nav>
+          )}
         </div>
 
-        {/* Summary Cards */}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">
-              Active Requests
-            </p>
-
-            <p className="text-3xl font-bold">
-              {totalActive}
-            </p>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">
-              New
-            </p>
-
-            <p className="text-3xl font-bold">
-              {newRequests}
-            </p>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">
-              In Progress
-            </p>
-
-            <p className="text-3xl font-bold">
-              {inProgressRequests}
-            </p>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p className="text-gray-600">
-              Completed
-            </p>
-
-            <p className="text-3xl font-bold">
-              {totalCompleted}
-            </p>
-          </div>
-
+        {/* Statistics */}
+        <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {statistics.map((stat) => (
+            <div
+              key={stat.label}
+              className="min-w-0 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5"
+            >
+              <p className="text-xs font-medium text-gray-500 sm:text-sm">
+                {stat.label}
+              </p>
+              <p className="mt-2 text-2xl font-bold sm:text-3xl">
+                {stat.value}
+              </p>
+            </div>
+          ))}
         </div>
 
-        {/* Filters */}
-
-        <div className="bg-white p-4 rounded-xl shadow mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-
-            <div>
-              <label className="block font-medium mb-1">
+        {/* Search and filters */}
+        <div className="mb-5 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="col-span-2 lg:col-span-1">
+              <label className="mb-1 block text-sm font-semibold">
                 Search
               </label>
-
               <input
-                type="text"
+                type="search"
                 placeholder="Search requests..."
                 value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
-                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+                onChange={(event) => setSearch(event.target.value)}
+                className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-3 text-base text-gray-900 lg:text-sm"
               />
             </div>
 
             <div>
-              <label className="block font-medium mb-1">
+              <label className="mb-1 block text-sm font-semibold">
                 Status
               </label>
-
               <select
                 value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(event.target.value)
-                }
-                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-2 py-3 text-sm text-gray-900"
               >
-                <option>All</option>
-                <option>New</option>
-                <option>Assigned</option>
-                <option>In Progress</option>
-                <option>Waiting for Parts</option>
+                <option value="All">All</option>
+                {STATUSES.filter((status) => status !== "Completed").map(
+                  (status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 
             <div>
-              <label className="block font-medium mb-1">
+              <label className="mb-1 block text-sm font-semibold">
                 Priority
               </label>
-
               <select
                 value={priorityFilter}
-                onChange={(event) =>
-                  setPriorityFilter(event.target.value)
-                }
-                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+                onChange={(event) => setPriorityFilter(event.target.value)}
+                className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-2 py-3 text-sm text-gray-900"
               >
-                <option>All</option>
+                <option value="All">All</option>
                 <option>Low</option>
                 <option>Medium</option>
                 <option>High</option>
@@ -570,17 +645,14 @@ export default function Dashboard() {
               </select>
             </div>
 
-            <div>
-              <label className="block font-medium mb-1">
+            <div className="col-span-2 lg:col-span-1">
+              <label className="mb-1 block text-sm font-semibold">
                 Sort By
               </label>
-
               <select
                 value={sortOption}
-                onChange={(event) =>
-                  setSortOption(event.target.value)
-                }
-                className="w-full border border-gray-400 rounded-lg p-2 bg-white text-gray-900"
+                onChange={(event) => setSortOption(event.target.value)}
+                className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900"
               >
                 <option>Newest</option>
                 <option>Oldest</option>
@@ -588,69 +660,67 @@ export default function Dashboard() {
                 <option>Lowest Priority</option>
               </select>
             </div>
-
           </div>
         </div>
 
-        {/* Active Requests */}
-
-        <div className="bg-white rounded-xl shadow mb-6">
-
-          <div className="p-4 border-b">
-            <h2 className="text-xl font-bold">
-              Active Requests
-            </h2>
-
-            <p className="text-gray-600 text-sm">
-              Requests that still require attention.
-            </p>
+        {/* Active requests */}
+        <section className="mb-5 min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div className="border-b border-gray-200 px-4 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold sm:text-xl">
+                  Active Requests
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Requests that still require attention.
+                </p>
+              </div>
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold">
+                {filteredActiveRequests.length}
+              </span>
+            </div>
           </div>
 
-          <RequestTable
-            requestList={filteredActiveRequests}
+          <RequestList
+            requests={filteredActiveRequests}
+            workers={workers}
+            onStatusChange={updateStatus}
+            onWorkerChange={updateAssignedTo}
           />
+        </section>
 
-        </div>
-
-        {/* Completed Requests Button */}
-
-        <button
-          onClick={() =>
-            setShowCompleted(!showCompleted)
-          }
-          className="w-full bg-white border border-gray-300 shadow rounded-xl p-4 font-semibold text-left flex justify-between items-center"
-        >
-          <span>
-            Completed Requests ({totalCompleted})
-          </span>
-
-          <span>
-            {showCompleted ? "▲ Hide" : "▼ View"}
-          </span>
-        </button>
-
-        {/* Completed Requests */}
-
-        {showCompleted && (
-          <div className="bg-white rounded-xl shadow mt-4 mb-6">
-
-            <div className="p-4 border-b">
-              <h2 className="text-xl font-bold">
-                Completed Requests
+        {/* Completed requests */}
+        <section className="min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <button
+            type="button"
+            onClick={() => setShowCompleted((open) => !open)}
+            aria-expanded={showCompleted}
+            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
+          >
+            <div>
+              <h2 className="text-lg font-bold">
+                Completed Requests ({completedRequests.length})
               </h2>
-
-              <p className="text-gray-600 text-sm">
+              <p className="mt-1 text-sm text-gray-500">
                 Previously completed maintenance work.
               </p>
             </div>
+            <span className="shrink-0 text-sm font-semibold">
+              {showCompleted ? "▲ Hide" : "▼ View"}
+            </span>
+          </button>
 
-            <RequestTable
-              requestList={filteredCompletedRequests}
-            />
-
-          </div>
-        )}
-
+          {showCompleted && (
+            <div className="border-t border-gray-200">
+              <RequestList
+                requests={filteredCompletedRequests}
+                workers={workers}
+                onStatusChange={updateStatus}
+                onWorkerChange={updateAssignedTo}
+              />
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
